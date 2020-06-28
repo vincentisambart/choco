@@ -47,6 +47,7 @@ impl From<AVAsset> for NSObject {
         unsafe { NSObject::from_owned_unchecked(obj.ptr) }
     }
 }
+impl IsKindOf<NSObject> for AVAsset {}
 
 //-------------------------------------------------------------------
 // AVURLAsset
@@ -129,3 +130,6 @@ impl From<AVURLAsset> for AVAsset {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
+
+impl IsKindOf<NSObject> for AVURLAsset {}
+impl IsKindOf<AVAsset> for AVURLAsset {}

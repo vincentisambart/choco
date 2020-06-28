@@ -171,31 +171,71 @@ NS_RETURNS_RETAINED NSArray *choco_Foundation_NSArrayInterface_instance_arrayByA
 }
 
 //-------------------------------------------------------------------
+// NSDictionary
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSDictionary)
+
+NSUInteger choco_Foundation_NSDictionaryInterface_instance_count(__unsafe_unretained NSDictionary *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.count;
+    )
+}
+
+NS_RETURNS_RETAINED id choco_Foundation_NSDictionaryInterface_instance_objectForKey(__unsafe_unretained NSDictionary *self_, __unsafe_unretained id key) {
+    ABORT_ON_EXCEPTION(
+        return [self_ objectForKey:key];
+    )
+}
+
+//-------------------------------------------------------------------
+// NSMutableDictionary
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSMutableDictionary)
+
+void choco_Foundation_NSMutableDictionary_instance_setObject_forKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id object, __unsafe_unretained id key) {
+    ABORT_ON_EXCEPTION(
+        return [self_ setObject:object forKey:key];
+    )
+}
+
+void choco_Foundation_NSMutableDictionary_instance_removeObjectForKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id key) {
+    ABORT_ON_EXCEPTION(
+        return [self_ removeObjectForKey:key];
+    )
+}
+
+void choco_Foundation_NSMutableDictionary_instance_removeAllObjects(__unsafe_unretained NSMutableDictionary *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ removeAllObjects];
+    )
+}
+
+//-------------------------------------------------------------------
 // NSDate
 
 CLASS_FUNCTION_DEFINITION(Foundation, NSDate)
 
 static_assert(std::is_same<NSTimeInterval, double>::value, "expecting NSTimeInterval to be a double");
 
-NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceNow(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSinceNow;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceReferenceDate(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSinceReferenceDate;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSince1970(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSince1970;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(__unsafe_unretained NSDate *self_, __unsafe_unretained NSDate *anotherDate) {
+NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceDate(__unsafe_unretained NSDate *self_, __unsafe_unretained NSDate *anotherDate) {
     ABORT_ON_EXCEPTION(
         return [self_ timeIntervalSinceDate:anotherDate];
     )

@@ -250,3 +250,6 @@ mod tests {
         assert!(obj1.is_equal(&obj2));
     }
 }
+
+pub trait IsKindOf<T: NSObjectProtocol>: NSObjectProtocol {}
+impl<T: NSObjectProtocol> IsKindOf<T> for T {}

@@ -122,6 +122,7 @@ impl From<NSString> for NSObject {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
+impl IsKindOf<NSObject> for NSString {}
 
 #[cfg(test)]
 mod string_tests {
@@ -185,6 +186,9 @@ impl NSObjectProtocol for StaticNSString {
 
 impl NSObjectInterface for StaticNSString {}
 impl NSStringInterface for StaticNSString {}
+
+impl IsKindOf<NSObject> for StaticNSString {}
+impl IsKindOf<NSString> for StaticNSString {}
 
 //-------------------------------------------------------------------
 // NSURL
@@ -291,6 +295,7 @@ impl From<NSURL> for NSObject {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
+impl IsKindOf<NSObject> for NSURL {}
 
 #[cfg(test)]
 mod url_tests {
@@ -372,7 +377,7 @@ pub trait NSArrayInterface<T: NSObjectProtocol>: NSObjectInterface {
 
     fn adding_object<Object>(&self, object: &Object) -> NSArray<T>
     where
-        Object: NSObjectProtocol + Into<T>,
+        Object: IsKindOf<T>,
     {
         let raw_self = self.as_raw();
         let raw_obj = object.as_raw();
@@ -419,7 +424,7 @@ impl<T: NSObjectProtocol> NSArrayInterface<T> for NSArray<T> {}
 
 impl<T: NSObjectProtocol> From<NSArray<T>> for NSObject {
     fn from(obj: NSArray<T>) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
@@ -481,9 +486,9 @@ pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
         self.count() == 0
     }
 
-    fn object_for<Key>(&self, key: &Key) -> Option<V::Owned>
+    fn get<Key>(&self, key: &Key) -> Option<V::Owned>
     where
-        Key: NSObjectProtocol + Into<K>,
+        Key: IsKindOf<K>,
     {
         let raw_self = self.as_raw();
         let raw_key = key.as_raw();
@@ -531,7 +536,131 @@ impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V> for N
 
 impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSDictionary<K, V>> for NSObject {
     fn from(obj: NSDictionary<K, V>) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+//-------------------------------------------------------------------
+// NSMutableDictionary
+
+extern "C" {
+    fn choco_Foundation_NSMutableDictionary_class() -> NullableObjCClassPtr;
+    fn choco_Foundation_NSMutableDictionary_instance_setObject_forKey(
+        self_: RawObjCPtr,
+        object: RawObjCPtr,
+        key: RawObjCPtr,
+    );
+    fn choco_Foundation_NSMutableDictionary_instance_removeObjectForKey(
+        self_: RawObjCPtr,
+        key: RawObjCPtr,
+    );
+    fn choco_Foundation_NSMutableDictionary_instance_removeAllObjects(self_: RawObjCPtr);
+}
+
+pub trait NSMutableDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
+    NSDictionaryInterface<K, V>
+{
+    fn set<Key, Value>(&self, key: &Key, value: &Value)
+    where
+        Key: IsKindOf<K>,
+        Value: IsKindOf<V>,
+    {
+        let raw_self = self.as_raw();
+        let raw_key = key.as_raw();
+        let raw_value = value.as_raw();
+        unsafe {
+            choco_Foundation_NSMutableDictionary_instance_setObject_forKey(
+                raw_self, raw_value, raw_key,
+            )
+        }
+    }
+
+    fn remove<Key>(&self, key: &Key)
+    where
+        Key: IsKindOf<K>,
+    {
+        let raw_self = self.as_raw();
+        let raw_key = key.as_raw();
+        unsafe {
+            choco_Foundation_NSMutableDictionary_instance_removeObjectForKey(raw_self, raw_key)
+        }
+    }
+
+    fn remove_all(&self) {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSMutableDictionary_instance_removeAllObjects(raw_self) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct NSMutableDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
+    ptr: OwnedObjCPtr,
+    _marker_k: std::marker::PhantomData<K>,
+    _marker_v: std::marker::PhantomData<V>,
+}
+
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectProtocol for NSMutableDictionary<K, V> {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self {
+            ptr,
+            _marker_k: std::marker::PhantomData,
+            _marker_v: std::marker::PhantomData,
+        }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_Foundation_NSMutableDictionary_class() }
+            .into_opt()
+            .expect("expecting +[NSMutableDictionary class] to return a non null pointer")
+    }
+}
+
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSMutableDictionary<K, V> {}
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V>
+    for NSMutableDictionary<K, V>
+{
+}
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSMutableDictionaryInterface<K, V>
+    for NSMutableDictionary<K, V>
+{
+}
+
+impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSMutableDictionary<K, V>> for NSObject {
+    fn from(obj: NSMutableDictionary<K, V>) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSMutableDictionary<K, V>>
+    for NSDictionary<K, V>
+{
+    fn from(obj: NSMutableDictionary<K, V>) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+#[cfg(test)]
+mod dictionary_tests {
+    use super::*;
+
+    #[test]
+    fn simple_dictionary() {
+        let dic: NSMutableDictionary<NSString, NSDate> = NSMutableDictionary::new();
+        assert!(dic.is_empty());
+        assert_eq!(dic.count(), 0);
+        let date = NSDate::new();
+        let key = NSString::new_with_str("abcd");
+        dic.set(&key, &date);
+        assert_eq!(dic.count(), 1);
+        let got = dic.get(&key).unwrap();
+        assert!(got.is_equal(&date));
     }
 }
 
@@ -556,16 +685,12 @@ impl NSTimeInterval {
 
 extern "C" {
     fn choco_Foundation_NSDate_class() -> NullableObjCClassPtr;
-    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(
+    fn choco_Foundation_NSDate_instance_timeIntervalSinceNow(self_: RawObjCPtr) -> NSTimeInterval;
+    fn choco_Foundation_NSDate_instance_timeIntervalSinceReferenceDate(
         self_: RawObjCPtr,
     ) -> NSTimeInterval;
-    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(
-        self_: RawObjCPtr,
-    ) -> NSTimeInterval;
-    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(
-        self_: RawObjCPtr,
-    ) -> NSTimeInterval;
-    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(
+    fn choco_Foundation_NSDate_instance_timeIntervalSince1970(self_: RawObjCPtr) -> NSTimeInterval;
+    fn choco_Foundation_NSDate_instance_timeIntervalSinceDate(
         self_: RawObjCPtr,
         anotherDate: RawObjCPtr,
     ) -> NSTimeInterval;
@@ -574,29 +699,24 @@ extern "C" {
 pub trait NSDateInterface: NSObjectInterface {
     fn since_now(&self) -> NSTimeInterval {
         let raw_self = self.as_raw();
-        unsafe { choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(raw_self) }
+        unsafe { choco_Foundation_NSDate_instance_timeIntervalSinceNow(raw_self) }
     }
 
     fn since_reference_date(&self) -> NSTimeInterval {
         let raw_self = self.as_raw();
-        unsafe {
-            choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(raw_self)
-        }
+        unsafe { choco_Foundation_NSDate_instance_timeIntervalSinceReferenceDate(raw_self) }
     }
 
     fn since_1970(&self) -> NSTimeInterval {
         let raw_self = self.as_raw();
-        unsafe { choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(raw_self) }
+        unsafe { choco_Foundation_NSDate_instance_timeIntervalSince1970(raw_self) }
     }
 
     fn since(&self, another_date: &NSDate) -> NSTimeInterval {
         let raw_self = self.as_raw();
         let raw_another_date = another_date.as_raw();
         unsafe {
-            choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(
-                raw_self,
-                raw_another_date,
-            )
+            choco_Foundation_NSDate_instance_timeIntervalSinceDate(raw_self, raw_another_date)
         }
     }
 }
@@ -633,6 +753,7 @@ impl From<NSDate> for NSObject {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
+impl IsKindOf<NSDate> for NSString {}
 
 impl std::ops::Sub for &NSDate {
     type Output = NSTimeInterval;
@@ -745,6 +866,7 @@ impl From<NSNumber> for NSObject {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
+impl IsKindOf<NSObject> for NSNumber {}
 
 #[cfg(test)]
 mod number_tests {
