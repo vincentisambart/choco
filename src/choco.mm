@@ -64,6 +64,12 @@ BOOL choco_core_NSObjectProtocol_instance_isKindOfClass(__unsafe_unretained id<N
     )
 }
 
+NS_RETURNS_RETAINED NSString *choco_core_NSObjectProtocol_instance_description(__unsafe_unretained id<NSObject> self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.description;
+    )
+}
+
 CLASS_FUNCTION_DEFINITION(core, NSObject)
 
 NS_RETURNS_RETAINED NSObject *choco_core_NSObjectInterface_class_new(Class klass) {

@@ -39,6 +39,7 @@ extern "C" {
         self_: RawObjCPtr,
         class: ObjCClassPtr,
     ) -> BOOL;
+    fn choco_core_NSObjectProtocol_instance_description(self_: RawObjCPtr) -> RawNullableObjCPtr;
 
     fn choco_core_NSObject_class() -> NullableObjCClassPtr;
     fn choco_core_NSObjectInterface_class_new(class: ObjCClassPtr) -> RawNullableObjCPtr;
@@ -207,6 +208,15 @@ pub trait NSObjectProtocol: Sized {
         let ret = unsafe { choco_core_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
         ret.into()
     }
+
+    fn description(&self) -> crate::foundation::NSString {
+        let self_raw = self.as_raw();
+        let raw_ptr = unsafe { choco_core_NSObjectProtocol_instance_description(self_raw) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[NSObject description] to return a non null pointer");
+        unsafe { crate::foundation::NSString::from_owned_raw_unchecked(raw) }
+    }
 }
 
 pub trait NSObjectInterface: NSObjectProtocol {
@@ -266,5 +276,6 @@ mod tests {
     }
 }
 
+/// Marker trait used for handling of type parameters in NSArray and NSDictionary.
 pub trait IsKindOf<T: NSObjectProtocol>: NSObjectProtocol {}
 impl<T: NSObjectProtocol> IsKindOf<T> for T {}
