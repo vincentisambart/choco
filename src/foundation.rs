@@ -97,7 +97,7 @@ pub struct NSString {
     ptr: OwnedObjCPtr,
 }
 
-impl ObjCPtr for NSString {
+impl NSObjectProtocol for NSString {
     type Owned = Self;
 
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
@@ -115,7 +115,6 @@ impl ObjCPtr for NSString {
     }
 }
 
-impl NSObjectProtocol for NSString {}
 impl NSObjectInterface for NSString {}
 impl NSStringInterface for NSString {}
 
@@ -231,7 +230,7 @@ pub struct NSURL {
     ptr: OwnedObjCPtr,
 }
 
-impl ObjCPtr for NSURL {
+impl NSObjectProtocol for NSURL {
     type Owned = Self;
 
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
@@ -249,7 +248,6 @@ impl ObjCPtr for NSURL {
     }
 }
 
-impl NSObjectProtocol for NSURL {}
 impl NSObjectInterface for NSURL {}
 impl NSURLInterface for NSURL {}
 
@@ -302,7 +300,7 @@ extern "C" {
     ) -> RawNullableObjCPtr;
 }
 
-pub trait NSArrayInterface<T: ObjCPtr>: NSObjectInterface {
+pub trait NSArrayInterface<T: NSObjectProtocol>: NSObjectInterface {
     fn first(&self) -> Option<T::Owned> {
         let raw_self = self.as_raw();
         let raw_ptr = unsafe { choco_Foundation_NSArrayInterface_instance_firstObject(raw_self) };
@@ -339,7 +337,7 @@ pub trait NSArrayInterface<T: ObjCPtr>: NSObjectInterface {
 
     fn adding_object<Object>(&self, object: &Object) -> NSArray<T>
     where
-        Object: ObjCPtr + Into<T>,
+        Object: NSObjectProtocol + Into<T>,
     {
         let raw_self = self.as_raw();
         let raw_obj = object.as_raw();
@@ -355,12 +353,12 @@ pub trait NSArrayInterface<T: ObjCPtr>: NSObjectInterface {
 
 #[repr(transparent)]
 #[derive(Clone)]
-pub struct NSArray<T: ObjCPtr> {
+pub struct NSArray<T: NSObjectProtocol> {
     ptr: OwnedObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ObjCPtr> ObjCPtr for NSArray<T> {
+impl<T: NSObjectProtocol> NSObjectProtocol for NSArray<T> {
     type Owned = Self;
 
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
@@ -381,11 +379,10 @@ impl<T: ObjCPtr> ObjCPtr for NSArray<T> {
     }
 }
 
-impl<T: ObjCPtr> NSObjectProtocol for NSArray<T> {}
-impl<T: ObjCPtr> NSObjectInterface for NSArray<T> {}
-impl<T: ObjCPtr> NSArrayInterface<T> for NSArray<T> {}
+impl<T: NSObjectProtocol> NSObjectInterface for NSArray<T> {}
+impl<T: NSObjectProtocol> NSArrayInterface<T> for NSArray<T> {}
 
-impl<T: ObjCPtr> From<NSArray<T>> for NSObject {
+impl<T: NSObjectProtocol> From<NSArray<T>> for NSObject {
     fn from(obj: NSArray<T>) -> Self {
         unsafe { NSObject::from_owned_unchecked(obj.ptr) }
     }
@@ -438,7 +435,9 @@ extern "C" {
     ) -> RawNullableObjCPtr;
 }
 
-pub trait NSDictionaryInterface<K: ObjCPtr, V: ObjCPtr>: NSObjectInterface {
+pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
+    NSObjectInterface
+{
     fn count(&self) -> usize {
         let raw_self = self.as_raw();
         unsafe { choco_Foundation_NSDictionaryInterface_instance_count(raw_self) }
@@ -449,7 +448,7 @@ pub trait NSDictionaryInterface<K: ObjCPtr, V: ObjCPtr>: NSObjectInterface {
 
     fn object_for<Key>(&self, key: &Key) -> Option<V::Owned>
     where
-        Key: ObjCPtr + Into<K>,
+        Key: NSObjectProtocol + Into<K>,
     {
         let raw_self = self.as_raw();
         let raw_key = key.as_raw();
@@ -464,13 +463,13 @@ pub trait NSDictionaryInterface<K: ObjCPtr, V: ObjCPtr>: NSObjectInterface {
 
 #[repr(transparent)]
 #[derive(Clone)]
-pub struct NSDictionary<K: ObjCPtr, V: ObjCPtr> {
+pub struct NSDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
     ptr: OwnedObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: ObjCPtr, V: ObjCPtr> ObjCPtr for NSDictionary<K, V> {
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectProtocol for NSDictionary<K, V> {
     type Owned = Self;
 
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
@@ -492,11 +491,10 @@ impl<K: ObjCPtr, V: ObjCPtr> ObjCPtr for NSDictionary<K, V> {
     }
 }
 
-impl<K: ObjCPtr, V: ObjCPtr> NSObjectProtocol for NSDictionary<K, V> {}
-impl<K: ObjCPtr, V: ObjCPtr> NSObjectInterface for NSDictionary<K, V> {}
-impl<K: ObjCPtr, V: ObjCPtr> NSDictionaryInterface<K, V> for NSDictionary<K, V> {}
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSDictionary<K, V> {}
+impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V> for NSDictionary<K, V> {}
 
-impl<K: ObjCPtr, V: ObjCPtr> From<NSDictionary<K, V>> for NSObject {
+impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSDictionary<K, V>> for NSObject {
     fn from(obj: NSDictionary<K, V>) -> Self {
         unsafe { NSObject::from_owned_unchecked(obj.ptr) }
     }

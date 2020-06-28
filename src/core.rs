@@ -151,35 +151,42 @@ impl Clone for OwnedObjCPtr {
 }
 
 // `Sized` is required to have default implementations of methods returning Self.
-pub trait ObjCPtr: Sized {
-    type Owned: ObjCPtr;
+pub trait NSObjectProtocol: Sized {
+    /// Owned version of the type. Most of the time it will be Self.
+    type Owned: NSObjectProtocol;
 
+    /// Objective-C class this struct represents.
     fn class() -> ObjCClassPtr;
+
+    /// Create a new struct owning its Objective-C pointer, without doing any check.
+    ///
     /// # Safety
     /// You must be sure that Objective-C pointer is of the correct type, and that you own the pointer.
     /// The pointer will be released this struct goes out of scope.
     unsafe fn from_owned_raw_unchecked(raw: RawObjCPtr) -> Self::Owned {
         Self::from_owned_unchecked(OwnedObjCPtr::from_raw_unchecked(raw))
     }
+
+    /// Create a new struct owning its Objective-C pointer, without doing any check.
+    ///
     /// # Safety
     /// You must be sure that Objective-C pointer is of the correct type.
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned;
 
     fn as_raw(&self) -> RawObjCPtr;
-}
 
-pub trait NSObjectProtocol: ObjCPtr {
     fn hash(&self) -> usize {
         unsafe { choco_core_NSObjectProtocol_instance_hash(self.as_raw()) }
     }
     // In Objective-C, the parameter to -[NSObject isEqual:] is nullable,
     // but that's not very useful and makes things hard to use in Rust so here we consider it non-nullable.
-    fn is_equal(&self, obj: &impl ObjCPtr) -> bool {
+    fn is_equal(&self, obj: &impl NSObjectProtocol) -> bool {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
         let ret = unsafe { choco_core_NSObjectProtocol_instance_isEqual(self_raw, obj_raw.into()) };
         ret.into()
     }
+
     fn is_kind_of(&self, class: ObjCClassPtr) -> bool {
         let self_raw = self.as_raw();
         let ret = unsafe { choco_core_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
@@ -203,7 +210,7 @@ pub struct NSObject {
     ptr: OwnedObjCPtr,
 }
 
-impl ObjCPtr for NSObject {
+impl NSObjectProtocol for NSObject {
     type Owned = Self;
 
     unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
@@ -221,7 +228,6 @@ impl ObjCPtr for NSObject {
     }
 }
 
-impl NSObjectProtocol for NSObject {}
 impl NSObjectInterface for NSObject {}
 
 #[cfg(test)]
