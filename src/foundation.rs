@@ -900,3 +900,46 @@ mod number_tests {
         assert_eq!(i.as_isize(), 12345657890);
     }
 }
+
+//-------------------------------------------------------------------
+// NSError
+
+extern "C" {
+    fn choco_Foundation_NSError_class() -> NullableObjCClassPtr;
+}
+
+pub trait NSErrorInterface: NSObjectInterface {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct NSError {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for NSError {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_Foundation_NSError_class() }
+            .into_opt()
+            .expect("expecting +[NSError class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for NSError {}
+impl NSErrorInterface for NSError {}
+
+impl From<NSError> for NSObject {
+    fn from(obj: NSError) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+impl IsKindOf<NSObject> for NSError {}

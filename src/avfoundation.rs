@@ -133,3 +133,73 @@ impl From<AVURLAsset> for AVAsset {
 
 impl IsKindOf<NSObject> for AVURLAsset {}
 impl IsKindOf<AVAsset> for AVURLAsset {}
+
+//-------------------------------------------------------------------
+// AVAssetReader
+
+extern "C" {
+    fn choco_AVFoundation_AVAssetReader_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
+        class: ObjCClassPtr,
+        asset: RawObjCPtr,
+        error: *mut RawNullableObjCPtr,
+    ) -> RawNullableObjCPtr;
+}
+
+pub trait AVAssetReaderInterface: NSObjectInterface {
+    fn new_with_asset(asset: &impl AVAssetInterface) -> Result<Self::Owned, NSError> {
+        let mut raw_error = RawNullableObjCPtr::empty();
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
+                Self::class(),
+                asset.as_raw(),
+                &mut raw_error,
+            )
+        };
+        // Create the object before checking the error,
+        // because if both the new object and error are not null,
+        // we want to the object to be properly released.
+        let obj = raw_ptr
+            .into_opt()
+            .map(|raw_ptr| unsafe { Self::from_owned_raw_unchecked(raw_ptr) });
+        match raw_error.into_opt() {
+            None => Ok(obj.expect("expecting non null return value pointer when no error")),
+            Some(raw_error) => Err(unsafe { NSError::retain_unowned_raw_unchecked(raw_error) }),
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct AVAssetReader {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for AVAssetReader {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_AVFoundation_AVAssetReader_class() }
+            .into_opt()
+            .expect("expecting +[AVAssetReader class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for AVAssetReader {}
+impl AVAssetReaderInterface for AVAssetReader {}
+
+impl From<AVAssetReader> for NSObject {
+    fn from(obj: AVAssetReader) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAssetReader {}

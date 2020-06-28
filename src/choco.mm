@@ -303,4 +303,10 @@ NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVURLAssetInterface_class_new
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReader)
 
+NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(Class klass, __unsafe_unretained AVAsset *asset, NSError * _Nullable __autoreleasing * _Nullable outError) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithAsset:asset error:outError];
+    )
+}
+
 } // extern "C"

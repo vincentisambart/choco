@@ -98,6 +98,10 @@ pub struct RawNullableObjCPtr {
 }
 
 impl RawNullableObjCPtr {
+    pub fn empty() -> Self {
+        RawNullableObjCPtr { ptr: None }
+    }
+
     pub fn into_opt(self) -> Option<RawObjCPtr> {
         self.ptr.map(|ptr| RawObjCPtr { ptr })
     }
@@ -161,10 +165,21 @@ pub trait NSObjectProtocol: Sized {
     /// Create a new struct owning its Objective-C pointer, without doing any check.
     ///
     /// # Safety
-    /// You must be sure that Objective-C pointer is of the correct type, and that you own the pointer.
+    /// You must be sure that Objective-C pointer is of the correct type, and that you own it.
     /// The pointer will be released this struct goes out of scope.
     unsafe fn from_owned_raw_unchecked(raw: RawObjCPtr) -> Self::Owned {
         Self::from_owned_unchecked(OwnedObjCPtr::from_raw_unchecked(raw))
+    }
+
+    /// Create a new struct owning its Objective-C pointer, from a non-owning pointer, without doing any check.
+    ///
+    /// # Safety
+    /// You must be sure that Objective-C pointer is of the correct type, and that you do not own it.
+    unsafe fn retain_unowned_raw_unchecked(unowned_raw: RawObjCPtr) -> Self::Owned {
+        let owned_raw = objc_retain(unowned_raw)
+            .into_opt()
+            .expect("expecting objc_retain() to return a non null pointer");
+        Self::from_owned_raw_unchecked(owned_raw)
     }
 
     /// Create a new struct owning its Objective-C pointer, without doing any check.
