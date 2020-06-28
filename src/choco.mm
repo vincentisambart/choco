@@ -243,9 +243,20 @@ NSUInteger choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(__un
 }
 
 //-------------------------------------------------------------------
-// AVAssetReader
+// AVAsset
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAsset)
+
+//-------------------------------------------------------------------
+// AVURLAsset
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVURLAsset)
+
+NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVURLAssetInterface_class_newWithURL_options(Class klass, __unsafe_unretained NSURL *url, __unsafe_unretained NSDictionary<NSString *,id> *options) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithURL:url options:options];
+    )
+}
 
 //-------------------------------------------------------------------
 // AVAssetReader

@@ -119,7 +119,7 @@ impl NSStringInterface for NSString {}
 
 impl From<NSString> for NSObject {
     fn from(obj: NSString) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
@@ -150,6 +150,41 @@ mod string_tests {
         assert_eq!(&obj.to_string().unwrap(), text);
     }
 }
+
+/// Unowned version of NSString used for static strings.
+/// The main difference is that it's Copy and doesn't do anything on drop.
+#[repr(transparent)]
+#[derive(Copy, Clone)]
+pub struct StaticNSString {
+    raw: RawObjCPtr,
+}
+
+impl StaticNSString {
+    pub(crate) unsafe fn from_static(raw: RawObjCPtr) -> Self {
+        Self { raw }
+    }
+}
+
+impl NSObjectProtocol for StaticNSString {
+    type Owned = NSString;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self::Owned { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.raw
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_Foundation_NSString_class() }
+            .into_opt()
+            .expect("expecting +[NSString class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for StaticNSString {}
+impl NSStringInterface for StaticNSString {}
 
 //-------------------------------------------------------------------
 // NSURL
@@ -253,7 +288,7 @@ impl NSURLInterface for NSURL {}
 
 impl From<NSURL> for NSObject {
     fn from(obj: NSURL) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
@@ -595,7 +630,7 @@ impl NSDateInterface for NSDate {}
 
 impl From<NSDate> for NSObject {
     fn from(obj: NSDate) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
@@ -707,7 +742,7 @@ impl NSNumberInterface for NSNumber {}
 
 impl From<NSNumber> for NSObject {
     fn from(obj: NSNumber) -> Self {
-        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
