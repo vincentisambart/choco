@@ -148,24 +148,15 @@ extern "C" {
 
 pub trait AVAssetReaderInterface: NSObjectInterface {
     fn new_with_asset(asset: &impl AVAssetInterface) -> Result<Self::Owned, NSError> {
-        let mut raw_error = RawNullableObjCPtr::empty();
+        let mut raw_unowned_error = RawNullableObjCPtr::empty();
         let raw_ptr = unsafe {
             choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
                 Self::class(),
                 asset.as_raw(),
-                &mut raw_error,
+                &mut raw_unowned_error,
             )
         };
-        // Create the object before checking the error,
-        // because if both the new object and error are not null,
-        // we want to the object to be properly released.
-        let obj = raw_ptr
-            .into_opt()
-            .map(|raw_ptr| unsafe { Self::from_owned_raw_unchecked(raw_ptr) });
-        match raw_error.into_opt() {
-            None => Ok(obj.expect("expecting non null return value pointer when no error")),
-            Some(raw_error) => Err(unsafe { NSError::retain_unowned_raw_unchecked(raw_error) }),
-        }
+        unsafe { make_result_unchecked::<Self>(raw_ptr, raw_unowned_error) }
     }
 }
 

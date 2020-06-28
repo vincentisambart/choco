@@ -943,3 +943,22 @@ impl From<NSError> for NSObject {
     }
 }
 impl IsKindOf<NSObject> for NSError {}
+
+/// # Safety
+/// - if non null, raw_ptr must be owned and of type T.
+/// - if non null, raw_unowned_error must not be owned (probably autoreleased) and point to a NSError.
+pub(crate) unsafe fn make_result_unchecked<T: NSObjectInterface>(
+    raw_ptr: RawNullableObjCPtr,
+    raw_unowned_error: RawNullableObjCPtr,
+) -> Result<T::Owned, NSError> {
+    // Create the object before checking the error,
+    // because if both the new object and error are not null,
+    // we want to the object to be properly released.
+    let obj = raw_ptr
+        .into_opt()
+        .map(|raw_ptr| T::from_owned_raw_unchecked(raw_ptr));
+    match raw_unowned_error.into_opt() {
+        None => Ok(obj.expect("expecting non null return value pointer when no error")),
+        Some(raw_error) => Err(NSError::retain_unowned_raw_unchecked(raw_error)),
+    }
+}
