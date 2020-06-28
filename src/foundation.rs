@@ -75,17 +75,16 @@ pub trait NSStringInterface: NSObjectInterface {
         let bytes = text.as_ptr() as *const std::ffi::c_void;
         let len = text.len();
         let encoding = NSStringEncoding::UTF8;
-        let raw = unsafe {
+        let raw_ptr = unsafe {
             choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(
                 Self::class(),
                 bytes,
                 len,
                 encoding,
             )
-        }
-        .into_opt()
-        .expect(
-            "expecting -[NSString initWithBytes:length:encoding:] to return a non null pointer",
+        };
+        let raw = raw_ptr.into_opt().expect(
+            "expecting -[[<class> alloc] initWithBytes:length:encoding:] to return a non null pointer",
         );
         unsafe { Self::from_owned_raw_unchecked(raw) }
     }
@@ -177,11 +176,12 @@ extern "C" {
 
 pub trait NSURLInterface: NSObjectInterface {
     fn new_with_string(string: &impl NSStringInterface) -> Option<Self::Owned> {
-        unsafe {
+        let raw_ptr = unsafe {
             choco_Foundation_NSURLInterface_class_newWithString(Self::class(), string.as_raw())
-        }
-        .into_opt()
-        .map(|raw| unsafe { Self::from_owned_raw_unchecked(raw) })
+        };
+        raw_ptr
+            .into_opt()
+            .map(|raw| unsafe { Self::from_owned_raw_unchecked(raw) })
     }
 
     // If you know if path is a directory or not, use file_url_with_path_is_directory() as it does not require to access the file system.
@@ -191,9 +191,9 @@ pub trait NSURLInterface: NSObjectInterface {
             choco_Foundation_NSURLInterface_class_fileURLWithPath(Self::class(), path.as_raw())
         };
         // In fact if the path is empty you will get a nil, but the documentation says you should not pass an empty path.
-        let raw = raw_ptr
-            .into_opt()
-            .expect("expecting -[[NSURL alloc] initFileURLWithPath:] to return a non null pointer");
+        let raw = raw_ptr.into_opt().expect(
+            "expecting -[[<class> alloc] initFileURLWithPath:] to return a non null pointer",
+        );
         unsafe { Self::from_owned_raw_unchecked(raw) }
     }
 
@@ -210,7 +210,7 @@ pub trait NSURLInterface: NSObjectInterface {
         };
         // In fact if the path is empty you will get a nil, but the documentation says you should not pass an empty path.
         let raw = raw_ptr.into_opt()
-            .expect("expecting -[[NSURL alloc] initFileURLWithPath:isDirectory:] to return a non null pointer");
+            .expect("expecting -[[<class> alloc] initFileURLWithPath:isDirectory:] to return a non null pointer");
         unsafe { Self::from_owned_raw_unchecked(raw) }
     }
 
@@ -497,5 +497,249 @@ impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V> for N
 impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSDictionary<K, V>> for NSObject {
     fn from(obj: NSDictionary<K, V>) -> Self {
         unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+//-------------------------------------------------------------------
+// NSDate
+
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct NSTimeInterval {
+    secs: f64,
+}
+
+impl NSTimeInterval {
+    pub fn from_secs(secs: f64) -> Self {
+        Self { secs }
+    }
+
+    pub fn secs(self) -> f64 {
+        self.secs
+    }
+}
+
+extern "C" {
+    fn choco_Foundation_NSDate_class() -> NullableObjCClassPtr;
+    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(
+        self_: RawObjCPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(
+        self_: RawObjCPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(
+        self_: RawObjCPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(
+        self_: RawObjCPtr,
+        anotherDate: RawObjCPtr,
+    ) -> NSTimeInterval;
+}
+
+pub trait NSDateInterface: NSObjectInterface {
+    fn since_now(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(raw_self) }
+    }
+
+    fn since_reference_date(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe {
+            choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(raw_self)
+        }
+    }
+
+    fn since_1970(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(raw_self) }
+    }
+
+    fn since(&self, another_date: &NSDate) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        let raw_another_date = another_date.as_raw();
+        unsafe {
+            choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(
+                raw_self,
+                raw_another_date,
+            )
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct NSDate {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for NSDate {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_Foundation_NSDate_class() }
+            .into_opt()
+            .expect("expecting +[NSDate class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for NSDate {}
+impl NSDateInterface for NSDate {}
+
+impl From<NSDate> for NSObject {
+    fn from(obj: NSDate) -> Self {
+        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl std::ops::Sub for &NSDate {
+    type Output = NSTimeInterval;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.since(rhs)
+    }
+}
+
+//-------------------------------------------------------------------
+// NSNumber
+
+extern "C" {
+    fn choco_Foundation_NSNumber_class() -> NullableObjCClassPtr;
+    fn choco_Foundation_NSNumberInterface_class_newWithBool(
+        class: ObjCClassPtr,
+        value: BOOL,
+    ) -> RawNullableObjCPtr;
+    fn choco_Foundation_NSNumberInterface_class_newWithInteger(
+        class: ObjCClassPtr,
+        value: NSInteger,
+    ) -> RawNullableObjCPtr;
+    fn choco_Foundation_NSNumberInterface_class_newWithUnsignedInteger(
+        class: ObjCClassPtr,
+        value: NSUInteger,
+    ) -> RawNullableObjCPtr;
+    fn choco_Foundation_NSNumberInterface_instance_boolValue(self_: RawObjCPtr) -> BOOL;
+    fn choco_Foundation_NSNumberInterface_instance_integerValue(self_: RawObjCPtr) -> NSInteger;
+    fn choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(
+        self_: RawObjCPtr,
+    ) -> NSUInteger;
+}
+
+pub trait NSNumberInterface: NSObjectInterface {
+    fn from_bool(value: bool) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_Foundation_NSNumberInterface_class_newWithBool(Self::class(), value.into())
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[[<class> alloc] initWithBool:] to return a non null pointer");
+        unsafe { Self::from_owned_raw_unchecked(raw) }
+    }
+
+    fn from_isize(value: isize) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_Foundation_NSNumberInterface_class_newWithInteger(Self::class(), value)
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[[<class> alloc] initWithInteger:] to return a non null pointer");
+        unsafe { Self::from_owned_raw_unchecked(raw) }
+    }
+
+    fn from_usize(value: usize) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_Foundation_NSNumberInterface_class_newWithUnsignedInteger(Self::class(), value)
+        };
+        let raw = raw_ptr.into_opt().expect(
+            "expecting -[[<class> alloc] initWithUnsignedInteger:] to return a non null pointer",
+        );
+        unsafe { Self::from_owned_raw_unchecked(raw) }
+    }
+
+    fn as_bool(&self) -> bool {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSNumberInterface_instance_boolValue(raw_self) }.into()
+    }
+
+    fn as_isize(&self) -> isize {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSNumberInterface_instance_integerValue(raw_self) }
+    }
+
+    fn as_usize(&self) -> usize {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(raw_self) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct NSNumber {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for NSNumber {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_Foundation_NSNumber_class() }
+            .into_opt()
+            .expect("expecting +[NSNumber class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for NSNumber {}
+impl NSNumberInterface for NSNumber {}
+
+impl From<NSNumber> for NSObject {
+    fn from(obj: NSNumber) -> Self {
+        unsafe { NSObject::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+#[cfg(test)]
+mod number_tests {
+    use super::*;
+
+    #[test]
+    fn bool_value() {
+        let t1 = NSNumber::from_bool(true);
+        let t2 = NSNumber::from_bool(true);
+        let f = NSNumber::from_bool(false);
+        assert!(t1.is_kind_of(NSNumber::class()));
+        assert!(t2.is_kind_of(NSNumber::class()));
+        assert!(t1.is_equal(&t1));
+        assert!(t1.is_equal(&t2));
+        assert!(!t1.is_equal(&f));
+        assert_eq!(t1.as_bool(), true);
+        assert_eq!(t2.as_bool(), true);
+        assert_eq!(f.as_bool(), false);
+    }
+
+    #[test]
+    fn isize_value() {
+        let t = NSNumber::from_bool(true);
+        let f = NSNumber::from_bool(false);
+        let i = NSNumber::from_isize(12345657890);
+        assert!(t.is_kind_of(NSNumber::class()));
+        assert!(f.is_kind_of(NSNumber::class()));
+        assert!(i.is_kind_of(NSNumber::class()));
+        assert_eq!(t.as_isize(), 1);
+        assert_eq!(f.as_isize(), 0);
+        assert_eq!(i.as_isize(), 12345657890);
     }
 }

@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #include <type_traits>
 #include <cstdint>
 
@@ -17,6 +18,9 @@ static void abort_due_to_exception(__unsafe_unretained NSException *exception) {
     abort();
 }
 
+// We want the C++ features, but not its name mangling.
+extern "C" {
+
 // We should not need that anymore once we can use the "C unwind" ABI.
 #define ABORT_ON_EXCEPTION(expr) \
     @try { \
@@ -26,8 +30,10 @@ static void abort_due_to_exception(__unsafe_unretained NSException *exception) {
         abort_due_to_exception(exception); \
     }
 
-// We want the C++ features, but not its name mangling.
-extern "C" {
+#define CLASS_FUNCTION_DEFINITION(location, class_name) \
+    Class choco_ ## location ## _ ## class_name ## _class(void) { \
+        return [class_name class]; \
+    }
 
 // Some explanation of the attributes used:
 // - All Objective-C pointer return values must be marked NS_RETURNS_RETAINED.
@@ -58,9 +64,7 @@ BOOL choco_core_NSObjectProtocol_instance_isKindOfClass(__unsafe_unretained id<N
     )
 }
 
-Class choco_core_NSObject_class() {
-    return [NSObject class];
-}
+CLASS_FUNCTION_DEFINITION(core, NSObject)
 
 NS_RETURNS_RETAINED NSObject *choco_core_NSObjectInterface_class_new(Class klass) {
     ABORT_ON_EXCEPTION(
@@ -71,9 +75,7 @@ NS_RETURNS_RETAINED NSObject *choco_core_NSObjectInterface_class_new(Class klass
 //-------------------------------------------------------------------
 // NSString
 
-Class choco_Foundation_NSString_class() {
-    return [NSString class];
-}
+CLASS_FUNCTION_DEFINITION(Foundation, NSString)
 
 const char *choco_Foundation_NSStringInterface_instance_UTF8String(__unsafe_unretained NSString *self_) {
     ABORT_ON_EXCEPTION(
@@ -105,9 +107,7 @@ NS_RETURNS_RETAINED NSString *choco_Foundation_NSStringInterface_class_newWithBy
 //-------------------------------------------------------------------
 // NSURL
 
-Class choco_Foundation_NSURL_class() {
-    return [NSURL class];
-}
+CLASS_FUNCTION_DEFINITION(Foundation, NSURL)
 
 NS_RETURNS_RETAINED NSString *choco_Foundation_NSURLInterface_class_newWithString(Class klass, __unsafe_unretained NSString *urlString) {
     ABORT_ON_EXCEPTION(
@@ -138,9 +138,7 @@ NS_RETURNS_RETAINED NSString *choco_Foundation_NSURLInterface_instance_absoluteS
 //-------------------------------------------------------------------
 // NSArray
 
-Class choco_Foundation_NSArray_class() {
-    return [NSArray class];
-}
+CLASS_FUNCTION_DEFINITION(Foundation, NSArray)
 
 NSUInteger choco_Foundation_NSArrayInterface_instance_count(__unsafe_unretained NSArray *self_) {
     ABORT_ON_EXCEPTION(
@@ -171,5 +169,87 @@ NS_RETURNS_RETAINED NSArray *choco_Foundation_NSArrayInterface_instance_arrayByA
         return [self_ arrayByAddingObject:object];
     )
 }
+
+//-------------------------------------------------------------------
+// NSDate
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSDate)
+
+static_assert(std::is_same<NSTimeInterval, double>::value, "expecting NSTimeInterval to be a double");
+
+NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceNow(__unsafe_unretained NSDate *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.timeIntervalSinceNow;
+    )
+}
+
+NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceReferenceDate(__unsafe_unretained NSDate *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.timeIntervalSinceReferenceDate;
+    )
+}
+
+NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSince1970(__unsafe_unretained NSDate *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.timeIntervalSince1970;
+    )
+}
+
+NSTimeInterval choco_Foundation_NSDictionaryInterface_instance_timeIntervalSinceDate(__unsafe_unretained NSDate *self_, __unsafe_unretained NSDate *anotherDate) {
+    ABORT_ON_EXCEPTION(
+        return [self_ timeIntervalSinceDate:anotherDate];
+    )
+}
+
+//-------------------------------------------------------------------
+// NSNumber
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSNumber)
+
+NS_RETURNS_RETAINED NSNumber *choco_Foundation_NSNumberInterface_class_newWithBool(Class klass, BOOL value) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithBool:value];
+    )
+}
+
+NS_RETURNS_RETAINED NSNumber *choco_Foundation_NSNumberInterface_class_newWithInteger(Class klass, NSInteger value) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithInteger:value];
+    )
+}
+
+NS_RETURNS_RETAINED NSNumber *choco_Foundation_NSNumberInterface_class_newWithUnsignedInteger(Class klass, NSUInteger value) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithUnsignedInteger:value];
+    )
+}
+
+BOOL choco_Foundation_NSNumberInterface_instance_boolValue(__unsafe_unretained NSNumber *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.boolValue;
+    )
+}
+
+NSInteger choco_Foundation_NSNumberInterface_instance_integerValue(__unsafe_unretained NSNumber *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.integerValue;
+    )
+}
+
+NSUInteger choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(__unsafe_unretained NSNumber *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.unsignedIntegerValue;
+    )
+}
+
+//-------------------------------------------------------------------
+// AVAssetReader
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVURLAsset)
+
+//-------------------------------------------------------------------
+// AVAssetReader
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReader)
 
 } // extern "C"
