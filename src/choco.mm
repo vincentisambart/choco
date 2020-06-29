@@ -305,6 +305,11 @@ NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVURLAssetInterface_class_new
 }
 
 //-------------------------------------------------------------------
+// AVAssetTrack
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetTrack)
+
+//-------------------------------------------------------------------
 // AVAssetReader
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReader)
@@ -314,5 +319,20 @@ NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVAssetReaderInterface_class_
         return [[klass alloc] initWithAsset:asset error:outError];
     )
 }
+
+//-------------------------------------------------------------------
+// AVAssetReaderTrackOutput
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReaderTrackOutput)
+
+//-------------------------------------------------------------------
+// AVAssetReaderOutput
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReaderOutput)
+
+//-------------------------------------------------------------------
+// AVAssetReaderSampleReferenceOutput
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReaderSampleReferenceOutput)
 
 } // extern "C"

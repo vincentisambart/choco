@@ -135,6 +135,50 @@ impl IsKindOf<NSObject> for AVURLAsset {}
 impl IsKindOf<AVAsset> for AVURLAsset {}
 
 //-------------------------------------------------------------------
+// AVAssetTrack
+
+extern "C" {
+    fn choco_AVFoundation_AVAssetTrack_class() -> NullableObjCClassPtr;
+}
+
+pub trait AVAssetTrackInterface: NSObjectInterface {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct AVAssetTrack {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for AVAssetTrack {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_AVFoundation_AVAssetTrack_class() }
+            .into_opt()
+            .expect("expecting +[AVAssetTrack class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for AVAssetTrack {}
+impl AVAssetTrackInterface for AVAssetTrack {}
+
+impl From<AVAssetTrack> for NSObject {
+    fn from(obj: AVAssetTrack) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAssetTrack {}
+
+//-------------------------------------------------------------------
 // AVAssetReader
 
 extern "C" {
@@ -194,3 +238,136 @@ impl From<AVAssetReader> for NSObject {
 }
 
 impl IsKindOf<NSObject> for AVAssetReader {}
+
+//-------------------------------------------------------------------
+// AVAssetReaderTrackOutput
+
+extern "C" {
+    fn choco_AVFoundation_AVAssetReaderTrackOutput_class() -> NullableObjCClassPtr;
+}
+
+pub trait AVAssetReaderTrackOutputInterface: NSObjectInterface {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct AVAssetReaderTrackOutput {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for AVAssetReaderTrackOutput {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_AVFoundation_AVAssetReaderTrackOutput_class() }
+            .into_opt()
+            .expect("expecting +[AVAssetReaderTrackOutput class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for AVAssetReaderTrackOutput {}
+impl AVAssetReaderTrackOutputInterface for AVAssetReaderTrackOutput {}
+
+impl From<AVAssetReaderTrackOutput> for NSObject {
+    fn from(obj: AVAssetReaderTrackOutput) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAssetReaderTrackOutput {}
+
+//-------------------------------------------------------------------
+// AVAssetReaderOutput
+
+extern "C" {
+    fn choco_AVFoundation_AVAssetReaderOutput_class() -> NullableObjCClassPtr;
+}
+
+pub trait AVAssetReaderOutputInterface: NSObjectInterface {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct AVAssetReaderOutput {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for AVAssetReaderOutput {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_AVFoundation_AVAssetReaderOutput_class() }
+            .into_opt()
+            .expect("expecting +[AVAssetReaderOutput class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for AVAssetReaderOutput {}
+impl AVAssetReaderOutputInterface for AVAssetReaderOutput {}
+
+impl From<AVAssetReaderOutput> for NSObject {
+    fn from(obj: AVAssetReaderOutput) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAssetReaderOutput {}
+
+//-------------------------------------------------------------------
+// AVAssetReaderSampleReferenceOutput
+
+extern "C" {
+    fn choco_AVFoundation_AVAssetReaderSampleReferenceOutput_class() -> NullableObjCClassPtr;
+}
+
+pub trait AVAssetReaderSampleReferenceOutputInterface: AVAssetReaderOutputInterface {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct AVAssetReaderSampleReferenceOutput {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectProtocol for AVAssetReaderSampleReferenceOutput {
+    type Owned = Self;
+
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
+        Self { ptr }
+    }
+
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw()
+    }
+
+    fn class() -> ObjCClassPtr {
+        unsafe { choco_AVFoundation_AVAssetReaderSampleReferenceOutput_class() }
+            .into_opt()
+            .expect("expecting +[AVAssetReaderSampleReferenceOutput class] to return a non null pointer")
+    }
+}
+
+impl NSObjectInterface for AVAssetReaderSampleReferenceOutput {}
+impl AVAssetReaderOutputInterface for AVAssetReaderSampleReferenceOutput {}
+impl AVAssetReaderSampleReferenceOutputInterface for AVAssetReaderSampleReferenceOutput {}
+
+impl From<AVAssetReaderSampleReferenceOutput> for NSObject {
+    fn from(obj: AVAssetReaderSampleReferenceOutput) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAssetReaderSampleReferenceOutput {}
