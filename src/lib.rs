@@ -2,4 +2,5 @@
 
 pub mod avfoundation;
 pub mod base;
+pub mod coremedia;
 pub mod foundation;
