@@ -5,6 +5,16 @@ use choco_macro::NSObjectProtocol;
 #[link(name = "AVFoundation", kind = "framework")]
 extern "C" {
     static AVURLAssetPreferPreciseDurationAndTimingKey: RawObjCPtr;
+    static AVMediaTypeAudio: RawObjCPtr;
+    static AVMediaTypeClosedCaption: RawObjCPtr;
+    static AVMediaTypeDepthData: RawObjCPtr;
+    static AVMediaTypeMetadata: RawObjCPtr;
+    static AVMediaTypeMetadataObject: RawObjCPtr;
+    static AVMediaTypeMuxed: RawObjCPtr;
+    static AVMediaTypeSubtitle: RawObjCPtr;
+    static AVMediaTypeText: RawObjCPtr;
+    static AVMediaTypeTimecode: RawObjCPtr;
+    static AVMediaTypeVideo: RawObjCPtr;
 }
 
 //-------------------------------------------------------------------
