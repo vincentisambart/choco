@@ -1,5 +1,6 @@
 use crate::base::*;
 use crate::foundation::*;
+use choco_macro::NSObjectProtocol;
 
 #[link(name = "AVFoundation", kind = "framework")]
 extern "C" {
@@ -16,27 +17,10 @@ extern "C" {
 pub trait AVAssetInterface: NSObjectInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAsset {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAsset {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAsset_class() }
-            .into_opt()
-            .expect("expecting +[AVAsset class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAsset {}
@@ -86,7 +70,8 @@ pub trait AVURLAssetInterface: AVAssetInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVURLAsset {
     ptr: OwnedObjCPtr,
 }
@@ -94,24 +79,6 @@ pub struct AVURLAsset {
 impl AVURLAsset {
     pub fn prefer_precise_duration_and_timing_key() -> StaticNSString {
         unsafe { StaticNSString::from_static(AVURLAssetPreferPreciseDurationAndTimingKey) }
-    }
-}
-
-impl NSObjectProtocol for AVURLAsset {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVURLAsset_class() }
-            .into_opt()
-            .expect("expecting +[AVURLAsset class] to return a non null pointer")
     }
 }
 
@@ -144,27 +111,10 @@ extern "C" {
 pub trait AVAssetTrackInterface: NSObjectInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAssetTrack {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAssetTrack {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAssetTrack_class() }
-            .into_opt()
-            .expect("expecting +[AVAssetTrack class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAssetTrack {}
@@ -205,27 +155,10 @@ pub trait AVAssetReaderInterface: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAssetReader {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAssetReader {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAssetReader_class() }
-            .into_opt()
-            .expect("expecting +[AVAssetReader class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAssetReader {}
@@ -249,27 +182,10 @@ extern "C" {
 pub trait AVAssetReaderTrackOutputInterface: NSObjectInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAssetReaderTrackOutput {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAssetReaderTrackOutput {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAssetReaderTrackOutput_class() }
-            .into_opt()
-            .expect("expecting +[AVAssetReaderTrackOutput class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAssetReaderTrackOutput {}
@@ -293,27 +209,10 @@ extern "C" {
 pub trait AVAssetReaderOutputInterface: NSObjectInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAssetReaderOutput {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAssetReaderOutput {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAssetReaderOutput_class() }
-            .into_opt()
-            .expect("expecting +[AVAssetReaderOutput class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAssetReaderOutput {}
@@ -337,27 +236,10 @@ extern "C" {
 pub trait AVAssetReaderSampleReferenceOutputInterface: AVAssetReaderOutputInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "AVFoundation")]
 pub struct AVAssetReaderSampleReferenceOutput {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for AVAssetReaderSampleReferenceOutput {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_AVFoundation_AVAssetReaderSampleReferenceOutput_class() }
-            .into_opt()
-            .expect("expecting +[AVAssetReaderSampleReferenceOutput class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for AVAssetReaderSampleReferenceOutput {}

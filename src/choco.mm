@@ -46,33 +46,33 @@ extern "C" {
 //-------------------------------------------------------------------
 // NSObject
 
-NSUInteger choco_core_NSObjectProtocol_instance_hash(id<NSObject> self_) {
+NSUInteger choco_base_NSObjectProtocol_instance_hash(id<NSObject> self_) {
     ABORT_ON_EXCEPTION(
         return self_.hash;
     )
 }
 
-BOOL choco_core_NSObjectProtocol_instance_isEqual(__unsafe_unretained id<NSObject> self_, __unsafe_unretained id object) {
+BOOL choco_base_NSObjectProtocol_instance_isEqual(__unsafe_unretained id<NSObject> self_, __unsafe_unretained id object) {
     ABORT_ON_EXCEPTION(
         return [self_ isEqual:object];
     )
 }
 
-BOOL choco_core_NSObjectProtocol_instance_isKindOfClass(__unsafe_unretained id<NSObject> self_, Class klass) {
+BOOL choco_base_NSObjectProtocol_instance_isKindOfClass(__unsafe_unretained id<NSObject> self_, Class klass) {
     ABORT_ON_EXCEPTION(
         return [self_ isKindOfClass:klass];
     )
 }
 
-NS_RETURNS_RETAINED NSString *choco_core_NSObjectProtocol_instance_description(__unsafe_unretained id<NSObject> self_) {
+NS_RETURNS_RETAINED NSString *choco_base_NSObjectProtocol_instance_description(__unsafe_unretained id<NSObject> self_) {
     ABORT_ON_EXCEPTION(
         return self_.description;
     )
 }
 
-CLASS_FUNCTION_DEFINITION(core, NSObject)
+CLASS_FUNCTION_DEFINITION(base, NSObject)
 
-NS_RETURNS_RETAINED NSObject *choco_core_NSObjectInterface_class_new(Class klass) {
+NS_RETURNS_RETAINED NSObject *choco_base_NSObjectInterface_class_new(Class klass) {
     ABORT_ON_EXCEPTION(
         return [klass new];
     )

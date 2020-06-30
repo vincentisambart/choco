@@ -1,3 +1,4 @@
+use choco_macro::NSObjectProtocol;
 use std::ptr::NonNull;
 
 #[repr(transparent)]
@@ -30,19 +31,19 @@ struct OpaqueObjCClass {
 }
 
 extern "C" {
-    fn choco_core_NSObjectProtocol_instance_hash(self_: RawObjCPtr) -> NSUInteger;
-    fn choco_core_NSObjectProtocol_instance_isEqual(
+    fn choco_base_NSObjectProtocol_instance_hash(self_: RawObjCPtr) -> NSUInteger;
+    fn choco_base_NSObjectProtocol_instance_isEqual(
         self_: RawObjCPtr,
         other: RawNullableObjCPtr,
     ) -> BOOL;
-    fn choco_core_NSObjectProtocol_instance_isKindOfClass(
+    fn choco_base_NSObjectProtocol_instance_isKindOfClass(
         self_: RawObjCPtr,
         class: ObjCClassPtr,
     ) -> BOOL;
-    fn choco_core_NSObjectProtocol_instance_description(self_: RawObjCPtr) -> RawNullableObjCPtr;
+    fn choco_base_NSObjectProtocol_instance_description(self_: RawObjCPtr) -> RawNullableObjCPtr;
 
-    fn choco_core_NSObject_class() -> NullableObjCClassPtr;
-    fn choco_core_NSObjectInterface_class_new(class: ObjCClassPtr) -> RawNullableObjCPtr;
+    fn choco_base_NSObject_class() -> NullableObjCClassPtr;
+    fn choco_base_NSObjectInterface_class_new(class: ObjCClassPtr) -> RawNullableObjCPtr;
 }
 
 // ARC runtime support - https://clang.llvm.org/docs/AutomaticReferenceCounting.html#runtime-support
@@ -155,8 +156,13 @@ impl Clone for OwnedObjCPtr {
     }
 }
 
-// `Sized` is required to have default implementations of methods returning Self.
-pub trait NSObjectProtocol: Sized {
+pub trait NSObjectProtocol
+where
+    // to be able to have default implementations of methods returning Self
+    Self: Sized,
+    // all objects should be clonable (here cloning just means increasing the refcount)
+    Self: Clone,
+{
     /// Owned version of the type. Most of the time it will be Self.
     type Owned: NSObjectProtocol;
 
@@ -192,26 +198,26 @@ pub trait NSObjectProtocol: Sized {
     fn as_raw(&self) -> RawObjCPtr;
 
     fn hash(&self) -> usize {
-        unsafe { choco_core_NSObjectProtocol_instance_hash(self.as_raw()) }
+        unsafe { choco_base_NSObjectProtocol_instance_hash(self.as_raw()) }
     }
     // In Objective-C, the parameter to -[NSObject isEqual:] is nullable,
     // but that's not very useful and makes things hard to use in Rust so here we consider it non-nullable.
     fn is_equal(&self, obj: &impl NSObjectProtocol) -> bool {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
-        let ret = unsafe { choco_core_NSObjectProtocol_instance_isEqual(self_raw, obj_raw.into()) };
+        let ret = unsafe { choco_base_NSObjectProtocol_instance_isEqual(self_raw, obj_raw.into()) };
         ret.into()
     }
 
     fn is_kind_of(&self, class: ObjCClassPtr) -> bool {
         let self_raw = self.as_raw();
-        let ret = unsafe { choco_core_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
+        let ret = unsafe { choco_base_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
         ret.into()
     }
 
     fn description(&self) -> crate::foundation::NSString {
         let self_raw = self.as_raw();
-        let raw_ptr = unsafe { choco_core_NSObjectProtocol_instance_description(self_raw) };
+        let raw_ptr = unsafe { choco_base_NSObjectProtocol_instance_description(self_raw) };
         let raw = raw_ptr
             .into_opt()
             .expect("expecting -[NSObject description] to return a non null pointer");
@@ -221,7 +227,7 @@ pub trait NSObjectProtocol: Sized {
 
 pub trait NSObjectInterface: NSObjectProtocol {
     fn new() -> Self::Owned {
-        let raw_ptr = unsafe { choco_core_NSObjectInterface_class_new(Self::class()) };
+        let raw_ptr = unsafe { choco_base_NSObjectInterface_class_new(Self::class()) };
         let raw = raw_ptr
             .into_opt()
             .expect("expecting +[<class_name> new] to return a non null pointer");
@@ -230,27 +236,10 @@ pub trait NSObjectInterface: NSObjectProtocol {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(base)]
 pub struct NSObject {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSObject {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_core_NSObject_class() }
-            .into_opt()
-            .expect("expecting +[NSObject class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSObject {}

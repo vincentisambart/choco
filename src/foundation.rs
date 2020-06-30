@@ -1,4 +1,5 @@
 use crate::base::*;
+use choco_macro::NSObjectProtocol;
 
 //-------------------------------------------------------------------
 // NSString
@@ -91,27 +92,10 @@ pub trait NSStringInterface: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSString {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSString {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSString_class() }
-            .into_opt()
-            .expect("expecting +[NSString class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSString {}
@@ -264,27 +248,10 @@ pub trait NSURLInterface: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSURL {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSURL {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSURL_class() }
-            .into_opt()
-            .expect("expecting +[NSURL class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSURL {}
@@ -502,33 +469,12 @@ pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
     ptr: OwnedObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
-}
-
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectProtocol for NSDictionary<K, V> {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self {
-            ptr,
-            _marker_k: std::marker::PhantomData,
-            _marker_v: std::marker::PhantomData,
-        }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSDictionary_class() }
-            .into_opt()
-            .expect("expecting +[NSDictionary class] to return a non null pointer")
-    }
 }
 
 impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSDictionary<K, V> {}
@@ -593,33 +539,12 @@ pub trait NSMutableDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSMutableDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
     ptr: OwnedObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
-}
-
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectProtocol for NSMutableDictionary<K, V> {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self {
-            ptr,
-            _marker_k: std::marker::PhantomData,
-            _marker_v: std::marker::PhantomData,
-        }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSMutableDictionary_class() }
-            .into_opt()
-            .expect("expecting +[NSMutableDictionary class] to return a non null pointer")
-    }
 }
 
 impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSMutableDictionary<K, V> {}
@@ -722,27 +647,10 @@ pub trait NSDateInterface: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSDate {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSDate {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSDate_class() }
-            .into_opt()
-            .expect("expecting +[NSDate class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSDate {}
@@ -835,27 +743,10 @@ pub trait NSNumberInterface: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSNumber {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSNumber {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSNumber_class() }
-            .into_opt()
-            .expect("expecting +[NSNumber class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSNumber {}
@@ -911,27 +802,10 @@ extern "C" {
 pub trait NSErrorInterface: NSObjectInterface {}
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
 pub struct NSError {
     ptr: OwnedObjCPtr,
-}
-
-impl NSObjectProtocol for NSError {
-    type Owned = Self;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self { ptr }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSError_class() }
-            .into_opt()
-            .expect("expecting +[NSError class] to return a non null pointer")
-    }
 }
 
 impl NSObjectInterface for NSError {}
