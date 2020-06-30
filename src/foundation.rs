@@ -6,18 +6,24 @@ use choco_macro::NSObjectProtocol;
 
 extern "C" {
     fn choco_Foundation_NSString_class() -> NullableObjCClassPtr;
-    fn choco_Foundation_NSStringInterface_instance_UTF8String(self_: RawObjCPtr) -> *const i8;
-    fn choco_Foundation_NSStringInterface_instance_characterAtIndex(
-        self_: RawObjCPtr,
-        index: NSUInteger,
-    ) -> u16;
-    fn choco_Foundation_NSStringInterface_instance_length(self_: RawObjCPtr) -> NSUInteger;
+
     fn choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(
         class: ObjCClassPtr,
         bytes: *const std::ffi::c_void,
         len: usize,
         encoding: NSStringEncoding,
     ) -> RawNullableObjCPtr;
+
+    fn choco_Foundation_NSStringInterface_instance_UTF8String(self_: RawObjCPtr) -> *const i8;
+    fn choco_Foundation_NSStringInterface_instance_characterAtIndex(
+        self_: RawObjCPtr,
+        index: NSUInteger,
+    ) -> u16;
+    fn choco_Foundation_NSStringInterface_instance_length(self_: RawObjCPtr) -> NSUInteger;
+    fn choco_Foundation_NSStringInterface_instance_isEqualToString(
+        self_: RawObjCPtr,
+        other: RawNullableObjCPtr,
+    ) -> BOOL;
 }
 
 #[repr(transparent)]
@@ -72,6 +78,15 @@ pub trait NSStringInterface: NSObjectInterface {
         self.len() == 0
     }
 
+    fn is_equal_to_string(&self, obj: &impl NSStringInterface) -> bool {
+        let self_raw = self.as_raw();
+        let obj_raw = obj.as_raw();
+        let ret = unsafe {
+            choco_Foundation_NSStringInterface_instance_isEqualToString(self_raw, obj_raw.into())
+        };
+        ret.into()
+    }
+
     fn new_with_str(text: &str) -> Self::Owned {
         let bytes = text.as_ptr() as *const std::ffi::c_void;
         let len = text.len();
@@ -107,6 +122,12 @@ impl From<NSString> for NSObject {
     }
 }
 impl IsKindOf<NSObject> for NSString {}
+
+impl std::cmp::PartialEq for NSString {
+    fn eq(&self, other: &Self) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
 
 #[cfg(test)]
 mod string_tests {
@@ -173,6 +194,18 @@ impl NSStringInterface for StaticNSString {}
 
 impl IsKindOf<NSObject> for StaticNSString {}
 impl IsKindOf<NSString> for StaticNSString {}
+
+impl std::cmp::PartialEq<StaticNSString> for NSString {
+    fn eq(&self, other: &StaticNSString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
+impl std::cmp::PartialEq<NSString> for StaticNSString {
+    fn eq(&self, other: &NSString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
 
 //-------------------------------------------------------------------
 // NSURL

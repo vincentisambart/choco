@@ -81,6 +81,14 @@ NS_RETURNS_RETAINED NSObject *choco_base_NSObjectInterface_class_new(Class klass
 //-------------------------------------------------------------------
 // NSString
 
+static_assert(std::is_same<NSStringEncoding, NSUInteger>::value, "expecting NSStringEncoding to be similar to NSUInteger");
+
+NS_RETURNS_RETAINED NSString *choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(Class klass, const void *bytes, NSUInteger len, NSStringEncoding encoding) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithBytes:bytes length:len encoding:encoding];
+    )
+}
+
 CLASS_FUNCTION_DEFINITION(Foundation, NSString)
 
 const char *choco_Foundation_NSStringInterface_instance_UTF8String(__unsafe_unretained NSString *self_) {
@@ -102,11 +110,9 @@ NSUInteger choco_Foundation_NSStringInterface_instance_length(__unsafe_unretaine
     )
 }
 
-static_assert(std::is_same<NSStringEncoding, NSUInteger>::value, "expecting NSStringEncoding to be similar to NSUInteger");
-
-NS_RETURNS_RETAINED NSString *choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(Class klass, const void *bytes, NSUInteger len, NSStringEncoding encoding) {
+BOOL choco_Foundation_NSStringInterface_instance_isEqualToString(__unsafe_unretained NSString *self_, __unsafe_unretained NSString *object) {
     ABORT_ON_EXCEPTION(
-        return [[klass alloc] initWithBytes:bytes length:len encoding:encoding];
+        return [self_ isEqualToString:object];
     )
 }
 
