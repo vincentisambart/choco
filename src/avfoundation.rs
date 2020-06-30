@@ -12,9 +12,20 @@ extern "C" {
 
 extern "C" {
     fn choco_AVFoundation_AVAsset_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVAssetInterface_instance_tracks(self_: RawObjCPtr)
+        -> RawNullableObjCPtr;
 }
 
-pub trait AVAssetInterface: NSObjectInterface {}
+pub trait AVAssetInterface: NSObjectInterface {
+    fn tracks(&self) -> NSArray<AVAssetTrack> {
+        let self_raw = self.as_raw();
+        let raw_ptr = unsafe { choco_AVFoundation_AVAssetInterface_instance_tracks(self_raw) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[AVAsset tracks] to return a non null pointer");
+        unsafe { NSArray::from_owned_raw_unchecked(raw) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]

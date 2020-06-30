@@ -293,6 +293,12 @@ NSUInteger choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(__un
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVAsset)
 
+NS_RETURNS_RETAINED NSArray<AVAssetTrack *> *choco_AVFoundation_AVAssetInterface_instance_tracks(__unsafe_unretained AVAsset *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.tracks;
+    )
+}
+
 //-------------------------------------------------------------------
 // AVURLAsset
 
