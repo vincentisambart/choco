@@ -26,7 +26,7 @@ struct OpaqueObjCObject {
 }
 
 #[repr(C)]
-struct OpaqueObjCClass {
+pub(crate) struct OpaqueObjCClass {
     _private: [u8; 0],
 }
 
@@ -41,6 +41,9 @@ extern "C" {
         class: ObjCClassPtr,
     ) -> BOOL;
     fn choco_base_NSObjectProtocol_instance_description(self_: RawObjCPtr) -> RawNullableObjCPtr;
+    fn choco_base_NSObjectProtocol_instance_debugDescription(
+        self_: RawObjCPtr,
+    ) -> RawNullableObjCPtr;
 
     fn choco_base_NSObject_class() -> NullableObjCClassPtr;
     fn choco_base_NSObjectInterface_class_new(class: ObjCClassPtr) -> RawNullableObjCPtr;
@@ -125,6 +128,9 @@ impl From<RawObjCPtr> for RawNullableObjCPtr {
 pub struct OwnedObjCPtr {
     raw: RawObjCPtr,
 }
+// TODO: Do we really need that...?
+unsafe impl Send for OwnedObjCPtr {}
+unsafe impl Sync for OwnedObjCPtr {}
 
 impl OwnedObjCPtr {
     /// # Safety
@@ -221,6 +227,15 @@ where
         let raw = raw_ptr
             .into_opt()
             .expect("expecting -[NSObject description] to return a non null pointer");
+        unsafe { crate::foundation::NSString::from_owned_raw_unchecked(raw) }
+    }
+
+    fn debug_description(&self) -> crate::foundation::NSString {
+        let self_raw = self.as_raw();
+        let raw_ptr = unsafe { choco_base_NSObjectProtocol_instance_debugDescription(self_raw) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[NSObject debugDescription] to return a non null pointer");
         unsafe { crate::foundation::NSString::from_owned_raw_unchecked(raw) }
     }
 }

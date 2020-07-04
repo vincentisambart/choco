@@ -70,6 +70,12 @@ NS_RETURNS_RETAINED NSString *choco_base_NSObjectProtocol_instance_description(_
     )
 }
 
+NS_RETURNS_RETAINED NSString *choco_base_NSObjectProtocol_instance_debugDescription(__unsafe_unretained id<NSObject> self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.debugDescription;
+    )
+}
+
 CLASS_FUNCTION_DEFINITION(base, NSObject)
 
 NS_RETURNS_RETAINED NSObject *choco_base_NSObjectInterface_class_new(Class klass) {
@@ -183,6 +189,17 @@ NS_RETURNS_RETAINED NSArray *choco_Foundation_NSArrayInterface_instance_arrayByA
 }
 
 //-------------------------------------------------------------------
+// NSMutableArray
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSMutableArray)
+
+void choco_Foundation_NSMutableArrayInterface_instance_addObject(__unsafe_unretained NSMutableArray *self_, __unsafe_unretained id anObject) {
+    ABORT_ON_EXCEPTION(
+        return [self_ addObject:anObject];
+    )
+}
+
+//-------------------------------------------------------------------
 // NSDictionary
 
 CLASS_FUNCTION_DEFINITION(Foundation, NSDictionary)
@@ -204,19 +221,19 @@ NS_RETURNS_RETAINED id choco_Foundation_NSDictionaryInterface_instance_objectFor
 
 CLASS_FUNCTION_DEFINITION(Foundation, NSMutableDictionary)
 
-void choco_Foundation_NSMutableDictionary_instance_setObject_forKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id object, __unsafe_unretained id key) {
+void choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id object, __unsafe_unretained id key) {
     ABORT_ON_EXCEPTION(
         return [self_ setObject:object forKey:key];
     )
 }
 
-void choco_Foundation_NSMutableDictionary_instance_removeObjectForKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id key) {
+void choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(__unsafe_unretained NSMutableDictionary *self_, __unsafe_unretained id key) {
     ABORT_ON_EXCEPTION(
         return [self_ removeObjectForKey:key];
     )
 }
 
-void choco_Foundation_NSMutableDictionary_instance_removeAllObjects(__unsafe_unretained NSMutableDictionary *self_) {
+void choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(__unsafe_unretained NSMutableDictionary *self_) {
     ABORT_ON_EXCEPTION(
         return [self_ removeAllObjects];
     )
@@ -229,25 +246,25 @@ CLASS_FUNCTION_DEFINITION(Foundation, NSDate)
 
 static_assert(std::is_same<NSTimeInterval, double>::value, "expecting NSTimeInterval to be a double");
 
-NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceNow(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSinceNow;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceReferenceDate(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSinceReferenceDate;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSince1970(__unsafe_unretained NSDate *self_) {
+NSTimeInterval choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(__unsafe_unretained NSDate *self_) {
     ABORT_ON_EXCEPTION(
         return self_.timeIntervalSince1970;
     )
 }
 
-NSTimeInterval choco_Foundation_NSDate_instance_timeIntervalSinceDate(__unsafe_unretained NSDate *self_, __unsafe_unretained NSDate *anotherDate) {
+NSTimeInterval choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(__unsafe_unretained NSDate *self_, __unsafe_unretained NSDate *anotherDate) {
     ABORT_ON_EXCEPTION(
         return [self_ timeIntervalSinceDate:anotherDate];
     )
@@ -291,6 +308,21 @@ NSInteger choco_Foundation_NSNumberInterface_instance_integerValue(__unsafe_unre
 NSUInteger choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(__unsafe_unretained NSNumber *self_) {
     ABORT_ON_EXCEPTION(
         return self_.unsignedIntegerValue;
+    )
+}
+
+//-------------------------------------------------------------------
+// AVAsynchronousKeyValueLoading
+
+AVKeyValueStatus choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(__unsafe_unretained id<AVAsynchronousKeyValueLoading> self_, __unsafe_unretained NSString *key, NSError * _Nullable __autoreleasing * _Nullable outError) {
+    ABORT_ON_EXCEPTION(
+        return [self_ statusOfValueForKey:key error:outError];
+    )
+}
+
+void choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(__unsafe_unretained id<AVAsynchronousKeyValueLoading> self_, __unsafe_unretained NSArray<NSString *> *keys, void (^ __unsafe_unretained handler)(void)) {
+    ABORT_ON_EXCEPTION(
+        return [self_ loadValuesAsynchronouslyForKeys:keys completionHandler:handler];
     )
 }
 

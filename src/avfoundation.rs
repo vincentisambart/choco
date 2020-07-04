@@ -1,4 +1,5 @@
 use crate::base::*;
+use crate::block::*;
 use crate::foundation::*;
 use choco_macro::NSObjectProtocol;
 
@@ -18,6 +19,73 @@ extern "C" {
 }
 
 //-------------------------------------------------------------------
+// AVAsynchronousKeyValueLoading
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct AVKeyValueStatus(isize);
+
+impl AVKeyValueStatus {
+    pub const UNKNOWN: Self = Self(0);
+    pub const LOADING: Self = Self(1);
+    pub const LOADED: Self = Self(2);
+    pub const FAILED: Self = Self(3);
+    pub const CANCELLED: Self = Self(4);
+}
+
+extern "C" {
+    fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
+        self_: RawObjCPtr,
+        key: RawObjCPtr,
+        error: *mut RawNullableObjCPtr,
+    ) -> AVKeyValueStatus;
+
+    fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
+        self_: RawObjCPtr,
+        keys: RawObjCPtr,
+        completion_handler: *mut std::ffi::c_void,
+    );
+}
+
+pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
+    fn status_of_value_for_key(
+        &self,
+        key: &impl NSStringInterface,
+    ) -> Result<AVKeyValueStatus, NSError> {
+        let self_raw = self.as_raw();
+        let mut raw_unowned_error = RawNullableObjCPtr::empty();
+        let status = unsafe {
+            choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
+                self_raw,
+                key.as_raw(),
+                &mut raw_unowned_error,
+            )
+        };
+        unsafe { make_value_result_unchecked(status, raw_unowned_error) }
+    }
+
+    fn load_values_async_for_keys<Key, Keys, CompletionHandler>(
+        &self,
+        keys: Keys,
+        handler: CompletionHandler,
+    ) where
+        Key: NSStringInterface,
+        Keys: NSArrayInterface<Key>,
+        CompletionHandler: Fn() + Send + Sync + 'static,
+    {
+        let self_raw = self.as_raw();
+        let block = HeapBlock::new(handler);
+        unsafe {
+            choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
+                self_raw,
+                keys.as_raw(),
+                block.block_ptr()
+            )
+        }
+    }
+}
+
+//-------------------------------------------------------------------
 // AVAsset
 
 extern "C" {
@@ -26,7 +94,10 @@ extern "C" {
         -> RawNullableObjCPtr;
 }
 
-pub trait AVAssetInterface: NSObjectInterface {
+pub trait AVAssetInterface: NSObjectInterface
+where
+    Self: AVAsynchronousKeyValueLoadingProtocol,
+{
     fn tracks(&self) -> NSArray<AVAssetTrack> {
         let self_raw = self.as_raw();
         let raw_ptr = unsafe { choco_AVFoundation_AVAssetInterface_instance_tracks(self_raw) };
@@ -45,6 +116,7 @@ pub struct AVAsset {
 }
 
 impl NSObjectInterface for AVAsset {}
+impl AVAsynchronousKeyValueLoadingProtocol for AVAsset {}
 impl AVAssetInterface for AVAsset {}
 
 impl From<AVAsset> for NSObject {
@@ -104,6 +176,7 @@ impl AVURLAsset {
 }
 
 impl NSObjectInterface for AVURLAsset {}
+impl AVAsynchronousKeyValueLoadingProtocol for AVURLAsset {}
 impl AVAssetInterface for AVURLAsset {}
 impl AVURLAssetInterface for AVURLAsset {}
 
@@ -129,7 +202,11 @@ extern "C" {
     fn choco_AVFoundation_AVAssetTrack_class() -> NullableObjCClassPtr;
 }
 
-pub trait AVAssetTrackInterface: NSObjectInterface {}
+pub trait AVAssetTrackInterface: NSObjectInterface
+where
+    Self: AVAsynchronousKeyValueLoadingProtocol,
+{
+}
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
@@ -139,6 +216,7 @@ pub struct AVAssetTrack {
 }
 
 impl NSObjectInterface for AVAssetTrack {}
+impl AVAsynchronousKeyValueLoadingProtocol for AVAssetTrack {}
 impl AVAssetTrackInterface for AVAssetTrack {}
 
 impl From<AVAssetTrack> for NSObject {
@@ -171,7 +249,7 @@ pub trait AVAssetReaderInterface: NSObjectInterface {
                 &mut raw_unowned_error,
             )
         };
-        unsafe { make_result_unchecked::<Self>(raw_ptr, raw_unowned_error) }
+        unsafe { make_object_result_unchecked::<Self>(raw_ptr, raw_unowned_error) }
     }
 }
 
