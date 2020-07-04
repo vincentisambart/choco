@@ -92,6 +92,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsset_class() -> NullableObjCClassPtr;
     fn choco_AVFoundation_AVAssetInterface_instance_tracks(self_: RawObjCPtr)
         -> RawNullableObjCPtr;
+    fn choco_AVFoundation_AVAssetInterface_instance_playable(self_: RawObjCPtr) -> BOOL;
 }
 
 pub trait AVAssetInterface: NSObjectInterface
@@ -105,6 +106,12 @@ where
             .into_opt()
             .expect("expecting -[AVAsset tracks] to return a non null pointer");
         unsafe { NSArray::from_owned_raw_unchecked(raw) }
+    }
+
+    // Named "playable" and not "is_playable" to be the same as the key to pass to AVAsynchronousKeyValueLoading.
+    fn playable(&self) -> bool {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVAssetInterface_instance_playable(self_raw) }.into()
     }
 }
 

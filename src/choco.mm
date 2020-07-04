@@ -337,6 +337,12 @@ NS_RETURNS_RETAINED NSArray<AVAssetTrack *> *choco_AVFoundation_AVAssetInterface
     )
 }
 
+BOOL choco_AVFoundation_AVAssetInterface_instance_playable(__unsafe_unretained AVAsset *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.playable;
+    )
+}
+
 //-------------------------------------------------------------------
 // AVURLAsset
 
