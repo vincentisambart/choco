@@ -6,16 +6,6 @@ use choco_macro::NSObjectProtocol;
 #[link(name = "AVFoundation", kind = "framework")]
 extern "C" {
     static AVURLAssetPreferPreciseDurationAndTimingKey: RawObjCPtr;
-    static AVMediaTypeAudio: RawObjCPtr;
-    static AVMediaTypeClosedCaption: RawObjCPtr;
-    static AVMediaTypeDepthData: RawObjCPtr;
-    static AVMediaTypeMetadata: RawObjCPtr;
-    static AVMediaTypeMetadataObject: RawObjCPtr;
-    static AVMediaTypeMuxed: RawObjCPtr;
-    static AVMediaTypeSubtitle: RawObjCPtr;
-    static AVMediaTypeText: RawObjCPtr;
-    static AVMediaTypeTimecode: RawObjCPtr;
-    static AVMediaTypeVideo: RawObjCPtr;
 }
 
 //-------------------------------------------------------------------
@@ -203,16 +193,134 @@ impl IsKindOf<NSObject> for AVURLAsset {}
 impl IsKindOf<AVAsset> for AVURLAsset {}
 
 //-------------------------------------------------------------------
+// AVMediaType
+
+#[link(name = "AVFoundation", kind = "framework")]
+extern "C" {
+    static AVMediaTypeAudio: RawObjCPtr;
+    static AVMediaTypeClosedCaption: RawObjCPtr;
+    static AVMediaTypeDepthData: RawObjCPtr;
+    static AVMediaTypeMetadata: RawObjCPtr;
+    static AVMediaTypeMetadataObject: RawObjCPtr;
+    static AVMediaTypeMuxed: RawObjCPtr;
+    static AVMediaTypeSubtitle: RawObjCPtr;
+    static AVMediaTypeText: RawObjCPtr;
+    static AVMediaTypeTimecode: RawObjCPtr;
+    static AVMediaTypeVideo: RawObjCPtr;
+}
+
+pub struct StaticAVMediaType {
+    raw: StaticNSString,
+}
+
+impl From<StaticAVMediaType> for StaticNSString {
+    fn from(media_type: StaticAVMediaType) -> Self {
+        media_type.raw
+    }
+}
+
+pub struct AVMediaType {
+    raw: NSString,
+}
+
+impl From<AVMediaType> for NSString {
+    fn from(media_type: AVMediaType) -> Self {
+        media_type.raw
+    }
+}
+
+impl AVMediaType {
+    pub fn new(raw: NSString) -> Self {
+        AVMediaType { raw }
+    }
+
+    pub fn audio() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeAudio) },
+        }
+    }
+    pub fn closed_caption() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeClosedCaption) },
+        }
+    }
+    pub fn depth_data() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeDepthData) },
+        }
+    }
+    pub fn metadata() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeMetadata) },
+        }
+    }
+    pub fn metadata_object() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeMetadataObject) },
+        }
+    }
+    pub fn muxed() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeMuxed) },
+        }
+    }
+    pub fn subtitle() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeSubtitle) },
+        }
+    }
+    pub fn text() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeText) },
+        }
+    }
+    pub fn timecode() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeTimecode) },
+        }
+    }
+    pub fn video() -> StaticAVMediaType {
+        StaticAVMediaType {
+            raw: unsafe { StaticNSString::from_static(AVMediaTypeVideo) },
+        }
+    }
+}
+
+impl std::cmp::PartialEq<StaticAVMediaType> for AVMediaType {
+    fn eq(&self, other: &StaticAVMediaType) -> bool {
+        self.raw.is_equal_to_string(&other.raw)
+    }
+}
+
+impl std::cmp::PartialEq<AVMediaType> for StaticAVMediaType {
+    fn eq(&self, other: &AVMediaType) -> bool {
+        self.raw.is_equal_to_string(&other.raw)
+    }
+}
+
+//-------------------------------------------------------------------
 // AVAssetTrack
 
 extern "C" {
     fn choco_AVFoundation_AVAssetTrack_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVAssetTrackInterface_instance_mediaType(
+        self_: RawObjCPtr,
+    ) -> RawNullableObjCPtr;
 }
 
 pub trait AVAssetTrackInterface: NSObjectInterface
 where
     Self: AVAsynchronousKeyValueLoadingProtocol,
 {
+    fn media_type(&self) -> AVMediaType {
+        let raw_self = self.as_raw();
+        let raw_ptr =
+            unsafe { choco_AVFoundation_AVAssetTrackInterface_instance_mediaType(raw_self) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[AVAssetTrack mediaType] to return a non null pointer");
+        AVMediaType::new(unsafe { NSString::from_owned_raw_unchecked(raw) })
+    }
 }
 
 #[repr(transparent)]

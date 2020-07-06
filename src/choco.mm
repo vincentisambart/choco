@@ -359,6 +359,12 @@ NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVURLAssetInterface_class_new
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetTrack)
 
+NS_RETURNS_RETAINED NSString *choco_AVFoundation_AVAssetTrackInterface_instance_mediaType(__unsafe_unretained AVAssetTrack *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.mediaType;
+    )
+}
+
 //-------------------------------------------------------------------
 // AVAssetReader
 
