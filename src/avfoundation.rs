@@ -43,7 +43,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
         self_: RawObjCPtr,
         keys: RawObjCPtr,
-        completion_handler: *mut std::ffi::c_void,
+        completion_handler: *mut crate::block::BlockHeader,
     );
 }
 
@@ -79,7 +79,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
             choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
                 self_raw,
                 keys.as_raw(),
-                block.block_ptr()
+                block.block_ref().get()
             )
         }
     }

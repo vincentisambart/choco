@@ -47,7 +47,7 @@ struct BlockDescriptor {
 unsafe impl Sync for BlockDescriptor {}
 
 #[repr(C)]
-struct BlockHeader {
+pub struct BlockHeader {
     isa: *const OpaqueObjCClass,
     flags: c_int,
     _reserved: c_int,
@@ -121,6 +121,10 @@ where
         };
         Self { inner }
     }
+
+    pub unsafe fn block_ref(&self) -> &std::cell::UnsafeCell<BlockHeader> {
+        &self.inner.header
+    }
 }
 
 /// Block that only leaves in the heap.
@@ -180,8 +184,8 @@ where
         Self { ptr }
     }
 
-    pub fn block_ptr(&self) -> *mut std::ffi::c_void {
-        self.ptr as _
+    pub unsafe fn block_ref(&self) -> &std::cell::UnsafeCell<BlockHeader> {
+        &(*self.ptr).header
     }
 }
 
