@@ -23,6 +23,10 @@ impl From<bool> for Boolean {
     }
 }
 
+#[repr(transparent)]
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct CFTypeID(usize);
+
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
     fn CFRelease(cf: RawCFTypeRef);
@@ -31,6 +35,7 @@ extern "C" {
     fn CFGetRetainCount(cf: RawCFTypeRef) -> CFIndex;
     fn CFHash(cf: RawCFTypeRef) -> CFHashCode;
     fn CFEqual(cf1: RawCFTypeRef, cf2: RawCFTypeRef) -> Boolean;
+    fn CFGetTypeID(cf: RawCFTypeRef) -> CFTypeID;
 }
 
 #[repr(transparent)]
@@ -122,5 +127,10 @@ where
     fn hash(&self) -> usize {
         let self_raw = self.as_raw();
         unsafe { CFHash(self_raw) }
+    }
+
+    fn type_id(&self) -> CFTypeID {
+        let self_raw = self.as_raw();
+        unsafe { CFGetTypeID(self_raw) }
     }
 }
