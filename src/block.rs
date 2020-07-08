@@ -26,7 +26,7 @@ const BLOCK_HAS_COPY_DISPOSE: c_int = 1 << 25;
 ///
 /// It looks like something we might be interested in, but looking at the compiler-rt code,
 /// it does not seem to do anything when the Objective-C GC is disabled, and Apple does not support that GC anymore.
-const BLOCK_HAS_CTOR: c_int = 1 << 26;
+// const BLOCK_HAS_CTOR: c_int = 1 << 26;
 
 #[repr(C)]
 struct BlockDescriptor {
@@ -304,7 +304,7 @@ where
 /// A type erased block.
 ///
 /// It can reference either a stack or heap block.
-pub struct Block<'a, Args, Ret> {
+struct Block<'a, Args, Ret> {
     ptr: *const c_void,
     /// Whether we own the block or not. We always own heap blocks, and never stack block.
     owning_ptr: bool,
@@ -341,10 +341,6 @@ impl<'a, Args, Ret> Block<'a, Args, Ret> {
             _ret_marker: PhantomData,
             _args_marker: PhantomData,
         }
-    }
-
-    fn ptr(&self) -> *const c_void {
-        self.ptr
     }
 }
 
