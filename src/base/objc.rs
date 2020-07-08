@@ -1,6 +1,9 @@
 use choco_macro::NSObjectProtocol;
 use std::ptr::NonNull;
 
+pub type NSInteger = isize;
+pub type NSUInteger = usize;
+
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct BOOL(i8);
@@ -16,9 +19,6 @@ impl From<bool> for BOOL {
         Self(if b { 1 } else { 0 })
     }
 }
-
-pub type NSInteger = isize;
-pub type NSUInteger = usize;
 
 #[repr(C)]
 struct OpaqueObjCObject {
