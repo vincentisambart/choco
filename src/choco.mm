@@ -365,6 +365,12 @@ NS_RETURNS_RETAINED NSString *choco_AVFoundation_AVAssetTrackInterface_instance_
     )
 }
 
+NS_RETURNS_RETAINED NSArray *choco_AVFoundation_AVAssetTrackInterface_instance_formatDescriptions(__unsafe_unretained AVAssetTrack *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.formatDescriptions;
+    )
+}
+
 //-------------------------------------------------------------------
 // AVAssetReader
 

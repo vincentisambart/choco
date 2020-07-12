@@ -3,5 +3,5 @@
 pub mod avfoundation;
 pub mod base;
 pub mod block;
-pub mod coremedia;
+pub mod core_media;
 pub mod foundation;

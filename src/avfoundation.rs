@@ -1,5 +1,6 @@
 use crate::base::*;
 use crate::block::*;
+use crate::core_media::*;
 use crate::foundation::*;
 use choco_macro::NSObjectProtocol;
 
@@ -27,7 +28,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
         self_: RawObjCPtr,
         key: RawObjCPtr,
-        error: *mut RawNullableObjCPtr,
+        error: *mut NullableRawObjCPtr,
     ) -> AVKeyValueStatus;
 
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
@@ -43,7 +44,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
         key: &impl NSStringInterface,
     ) -> Result<AVKeyValueStatus, NSError> {
         let self_raw = self.as_raw();
-        let mut raw_unowned_error = RawNullableObjCPtr::empty();
+        let mut raw_unowned_error = NullableRawObjCPtr::empty();
         let status = unsafe {
             choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
                 self_raw,
@@ -59,7 +60,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
         keys: Keys,
         handler: CompletionHandler,
     ) where
-        Key: NSStringInterface,
+        Key: NSStringInterface + TypedOwnedObjCPtr,
         Keys: NSArrayInterface<Key>,
         CompletionHandler: Fn() + Send + Sync + 'static,
     {
@@ -81,7 +82,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
 extern "C" {
     fn choco_AVFoundation_AVAsset_class() -> NullableObjCClassPtr;
     fn choco_AVFoundation_AVAssetInterface_instance_tracks(self_: RawObjCPtr)
-        -> RawNullableObjCPtr;
+        -> NullableRawObjCPtr;
     fn choco_AVFoundation_AVAssetInterface_instance_playable(self_: RawObjCPtr) -> BOOL;
 }
 
@@ -132,7 +133,7 @@ extern "C" {
         class: ObjCClassPtr,
         url: RawObjCPtr,
         options: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
 }
 
 pub trait AVURLAssetInterface: AVAssetInterface {
@@ -141,8 +142,8 @@ pub trait AVURLAssetInterface: AVAssetInterface {
         options: &Options,
     ) -> Self::Owned
     where
-        K: NSStringInterface,
-        V: NSObjectProtocol,
+        K: NSStringInterface + TypedOwnedObjCPtr,
+        V: NSObjectProtocol + TypedOwnedObjCPtr,
         Options: NSDictionaryInterface<K, V>,
     {
         let raw_ptr = unsafe {
@@ -155,7 +156,7 @@ pub trait AVURLAssetInterface: AVAssetInterface {
         let raw = raw_ptr.into_opt().expect(
             "expecting -[[<class> alloc] initWithURL:options:] to return a non null pointer",
         );
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 }
 
@@ -305,7 +306,10 @@ extern "C" {
     fn choco_AVFoundation_AVAssetTrack_class() -> NullableObjCClassPtr;
     fn choco_AVFoundation_AVAssetTrackInterface_instance_mediaType(
         self_: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVAssetTrackInterface_instance_formatDescriptions(
+        self_: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
 }
 
 pub trait AVAssetTrackInterface: NSObjectInterface
@@ -320,6 +324,17 @@ where
             .into_opt()
             .expect("expecting -[AVAssetTrack mediaType] to return a non null pointer");
         AVMediaType::new(unsafe { NSString::from_owned_raw_unchecked(raw) })
+    }
+
+    fn format_descriptions(&self) -> NSArray<CMFormatDescription> {
+        let raw_self = self.as_raw();
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVAssetTrackInterface_instance_formatDescriptions(raw_self)
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[AVAssetTrack formatDescriptions] to return a non null pointer");
+        unsafe { NSArray::from_owned_raw_unchecked(raw) }
     }
 }
 
@@ -350,13 +365,13 @@ extern "C" {
     fn choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
         class: ObjCClassPtr,
         asset: RawObjCPtr,
-        error: *mut RawNullableObjCPtr,
-    ) -> RawNullableObjCPtr;
+        error: *mut NullableRawObjCPtr,
+    ) -> NullableRawObjCPtr;
 }
 
 pub trait AVAssetReaderInterface: NSObjectInterface {
     fn new_with_asset(asset: &impl AVAssetInterface) -> Result<Self::Owned, NSError> {
-        let mut raw_unowned_error = RawNullableObjCPtr::empty();
+        let mut raw_unowned_error = NullableRawObjCPtr::empty();
         let raw_ptr = unsafe {
             choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
                 Self::class(),

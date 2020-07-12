@@ -12,7 +12,7 @@ extern "C" {
         bytes: *const std::ffi::c_void,
         len: usize,
         encoding: NSStringEncoding,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
 
     fn choco_Foundation_NSStringInterface_instance_UTF8String(self_: RawObjCPtr) -> *const i8;
     fn choco_Foundation_NSStringInterface_instance_characterAtIndex(
@@ -22,7 +22,7 @@ extern "C" {
     fn choco_Foundation_NSStringInterface_instance_length(self_: RawObjCPtr) -> NSUInteger;
     fn choco_Foundation_NSStringInterface_instance_isEqualToString(
         self_: RawObjCPtr,
-        other: RawNullableObjCPtr,
+        other: NullableRawObjCPtr,
     ) -> BOOL;
 }
 
@@ -112,7 +112,7 @@ pub trait NSStringInterface: NSObjectInterface {
         let raw = raw_ptr.into_opt().expect(
             "expecting -[[<class> alloc] initWithBytes:length:encoding:] to return a non null pointer",
         );
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 }
 
@@ -181,16 +181,14 @@ impl StaticNSString {
     }
 }
 
-impl NSObjectProtocol for StaticNSString {
-    type Owned = NSString;
-
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self::Owned { ptr }
-    }
-
+impl AsRawObjCPtr for StaticNSString {
     fn as_raw(&self) -> RawObjCPtr {
         self.raw
     }
+}
+
+impl NSObjectProtocol for StaticNSString {
+    type Owned = NSString;
 
     fn class() -> ObjCClassPtr {
         unsafe { choco_Foundation_NSString_class() }
@@ -225,19 +223,19 @@ extern "C" {
     fn choco_Foundation_NSURLInterface_class_newWithString(
         class: ObjCClassPtr,
         urlString: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSURLInterface_class_fileURLWithPath(
         class: ObjCClassPtr,
         path: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSURLInterface_class_fileURLWithPath_isDirectory(
         class: ObjCClassPtr,
         path: RawObjCPtr,
         is_directory: BOOL,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSURLInterface_instance_absoluteString(
         self_: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
 }
 
 pub trait NSURLInterface: NSObjectInterface {
@@ -247,7 +245,7 @@ pub trait NSURLInterface: NSObjectInterface {
         };
         raw_ptr
             .into_opt()
-            .map(|raw| unsafe { Self::from_owned_raw_unchecked(raw) })
+            .map(|raw| unsafe { Self::Owned::from_owned_raw_unchecked(raw) })
     }
 
     // If you know if path is a directory or not, use file_url_with_path_is_directory() as it does not require to access the file system.
@@ -260,7 +258,7 @@ pub trait NSURLInterface: NSObjectInterface {
         let raw = raw_ptr.into_opt().expect(
             "expecting -[[<class> alloc] initFileURLWithPath:] to return a non null pointer",
         );
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 
     fn file_url_with_path_is_directory(
@@ -277,7 +275,7 @@ pub trait NSURLInterface: NSObjectInterface {
         // In fact if the path is empty you will get a nil, but the documentation says you should not pass an empty path.
         let raw = raw_ptr.into_opt()
             .expect("expecting -[[<class> alloc] initFileURLWithPath:isDirectory:] to return a non null pointer");
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 
     fn absolute_string(&self) -> NSString {
@@ -336,29 +334,29 @@ extern "C" {
     fn choco_Foundation_NSArrayInterface_instance_count(self_: RawObjCPtr) -> usize;
     fn choco_Foundation_NSArrayInterface_instance_firstObject(
         self_: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSArrayInterface_instance_lastObject(
         self_: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSArrayInterface_instance_objectAtIndex(
         self_: RawObjCPtr,
         index: usize,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSArrayInterface_instance_arrayByAddingObject(
         self_: RawObjCPtr,
         obj: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
 }
 
-pub trait NSArrayInterface<T: NSObjectProtocol>: NSObjectInterface {
-    fn first(&self) -> Option<T::Owned> {
+pub trait NSArrayInterface<T: TypedOwnedObjCPtr>: NSObjectInterface {
+    fn first(&self) -> Option<T> {
         let raw_self = self.as_raw();
         let raw_ptr = unsafe { choco_Foundation_NSArrayInterface_instance_firstObject(raw_self) };
         raw_ptr
             .into_opt()
             .map(|raw| unsafe { T::from_owned_raw_unchecked(raw) })
     }
-    fn last(&self) -> Option<T::Owned> {
+    fn last(&self) -> Option<T> {
         let raw_self = self.as_raw();
         let raw_ptr = unsafe { choco_Foundation_NSArrayInterface_instance_lastObject(raw_self) };
         raw_ptr
@@ -366,7 +364,7 @@ pub trait NSArrayInterface<T: NSObjectProtocol>: NSObjectInterface {
             .map(|raw| unsafe { T::from_owned_raw_unchecked(raw) })
     }
 
-    fn object_at(&self, index: usize) -> T::Owned {
+    fn object_at(&self, index: usize) -> T {
         let raw_self = self.as_raw();
         let raw_ptr =
             unsafe { choco_Foundation_NSArrayInterface_instance_objectAtIndex(raw_self, index) };
@@ -403,37 +401,17 @@ pub trait NSArrayInterface<T: NSObjectProtocol>: NSObjectInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
-pub struct NSArray<T: NSObjectProtocol> {
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = "Foundation")]
+pub struct NSArray<T: TypedOwnedObjCPtr> {
     ptr: OwnedObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: NSObjectProtocol> NSObjectProtocol for NSArray<T> {
-    type Owned = Self;
+impl<T: TypedOwnedObjCPtr> NSObjectInterface for NSArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSArrayInterface<T> for NSArray<T> {}
 
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self::Owned {
-        Self {
-            ptr,
-            _marker: std::marker::PhantomData,
-        }
-    }
-
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw()
-    }
-
-    fn class() -> ObjCClassPtr {
-        unsafe { choco_Foundation_NSArray_class() }
-            .into_opt()
-            .expect("expecting +[NSArray class] to return a non null pointer")
-    }
-}
-
-impl<T: NSObjectProtocol> NSObjectInterface for NSArray<T> {}
-impl<T: NSObjectProtocol> NSArrayInterface<T> for NSArray<T> {}
-
-impl<T: NSObjectProtocol> From<NSArray<T>> for NSObject {
+impl<T: TypedOwnedObjCPtr> From<NSArray<T>> for NSObject {
     fn from(obj: NSArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
@@ -485,7 +463,7 @@ extern "C" {
     );
 }
 
-pub trait NSMutableArrayInterface<T: NSObjectProtocol>: NSArrayInterface<T> {
+pub trait NSMutableArrayInterface<T: TypedOwnedObjCPtr>: NSArrayInterface<T> {
     fn add_object<Value>(&self, value: &Value)
     where
         Value: IsKindOf<T>,
@@ -499,22 +477,22 @@ pub trait NSMutableArrayInterface<T: NSObjectProtocol>: NSArrayInterface<T> {
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = "Foundation")]
-pub struct NSMutableArray<T: NSObjectProtocol> {
+pub struct NSMutableArray<T: TypedOwnedObjCPtr> {
     ptr: OwnedObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: NSObjectProtocol> NSObjectInterface for NSMutableArray<T> {}
-impl<T: NSObjectProtocol> NSArrayInterface<T> for NSMutableArray<T> {}
-impl<T: NSObjectProtocol> NSMutableArrayInterface<T> for NSMutableArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSObjectInterface for NSMutableArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSArrayInterface<T> for NSMutableArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSMutableArrayInterface<T> for NSMutableArray<T> {}
 
-impl<T: NSObjectProtocol> From<NSMutableArray<T>> for NSObject {
+impl<T: TypedOwnedObjCPtr> From<NSMutableArray<T>> for NSObject {
     fn from(obj: NSMutableArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<T: NSObjectProtocol> From<NSMutableArray<T>> for NSArray<T> {
+impl<T: TypedOwnedObjCPtr> From<NSMutableArray<T>> for NSArray<T> {
     fn from(obj: NSMutableArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
@@ -546,10 +524,10 @@ extern "C" {
     fn choco_Foundation_NSDictionaryInterface_instance_objectForKey(
         self_: RawObjCPtr,
         key: RawObjCPtr,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
 }
 
-pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
+pub trait NSDictionaryInterface<K: TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>:
     NSObjectInterface
 {
     fn count(&self) -> usize {
@@ -560,7 +538,7 @@ pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
         self.count() == 0
     }
 
-    fn get<Key>(&self, key: &Key) -> Option<V::Owned>
+    fn get<Key>(&self, key: &Key) -> Option<V>
     where
         Key: IsKindOf<K>,
     {
@@ -578,16 +556,24 @@ pub trait NSDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = "Foundation")]
-pub struct NSDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
+pub struct NSDictionary<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> {
     ptr: OwnedObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSDictionary<K, V> {}
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V> for NSDictionary<K, V> {}
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInterface
+    for NSDictionary<K, V>
+{
+}
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
+    for NSDictionary<K, V>
+{
+}
 
-impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSDictionary<K, V>> for NSObject {
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSDictionary<K, V>>
+    for NSObject
+{
     fn from(obj: NSDictionary<K, V>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
@@ -610,8 +596,10 @@ extern "C" {
     fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(self_: RawObjCPtr);
 }
 
-pub trait NSMutableDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>:
-    NSDictionaryInterface<K, V>
+pub trait NSMutableDictionaryInterface<
+    K: NSObjectProtocol + TypedOwnedObjCPtr,
+    V: TypedOwnedObjCPtr,
+>: NSDictionaryInterface<K, V>
 {
     fn set<Key, Value>(&self, key: &Key, value: &Value)
     where
@@ -650,29 +638,34 @@ pub trait NSMutableDictionaryInterface<K: NSObjectProtocol, V: NSObjectProtocol>
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = "Foundation")]
-pub struct NSMutableDictionary<K: NSObjectProtocol, V: NSObjectProtocol> {
+pub struct NSMutableDictionary<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> {
     ptr: OwnedObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSObjectInterface for NSMutableDictionary<K, V> {}
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSDictionaryInterface<K, V>
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInterface
     for NSMutableDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol, V: NSObjectProtocol> NSMutableDictionaryInterface<K, V>
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
     for NSMutableDictionary<K, V>
+{
+}
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
+    NSMutableDictionaryInterface<K, V> for NSMutableDictionary<K, V>
 {
 }
 
-impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSMutableDictionary<K, V>> for NSObject {
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSMutableDictionary<K, V>>
+    for NSObject
+{
     fn from(obj: NSMutableDictionary<K, V>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<K: NSObjectProtocol, V: NSObjectProtocol> From<NSMutableDictionary<K, V>>
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSMutableDictionary<K, V>>
     for NSDictionary<K, V>
 {
     fn from(obj: NSMutableDictionary<K, V>) -> Self {
@@ -797,15 +790,15 @@ extern "C" {
     fn choco_Foundation_NSNumberInterface_class_newWithBool(
         class: ObjCClassPtr,
         value: BOOL,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSNumberInterface_class_newWithInteger(
         class: ObjCClassPtr,
         value: NSInteger,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSNumberInterface_class_newWithUnsignedInteger(
         class: ObjCClassPtr,
         value: NSUInteger,
-    ) -> RawNullableObjCPtr;
+    ) -> NullableRawObjCPtr;
     fn choco_Foundation_NSNumberInterface_instance_boolValue(self_: RawObjCPtr) -> BOOL;
     fn choco_Foundation_NSNumberInterface_instance_integerValue(self_: RawObjCPtr) -> NSInteger;
     fn choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(
@@ -821,7 +814,7 @@ pub trait NSNumberInterface: NSObjectInterface {
         let raw = raw_ptr
             .into_opt()
             .expect("expecting -[[<class> alloc] initWithBool:] to return a non null pointer");
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 
     fn from_isize(value: isize) -> Self::Owned {
@@ -831,7 +824,7 @@ pub trait NSNumberInterface: NSObjectInterface {
         let raw = raw_ptr
             .into_opt()
             .expect("expecting -[[<class> alloc] initWithInteger:] to return a non null pointer");
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 
     fn from_usize(value: usize) -> Self::Owned {
@@ -841,7 +834,7 @@ pub trait NSNumberInterface: NSObjectInterface {
         let raw = raw_ptr.into_opt().expect(
             "expecting -[[<class> alloc] initWithUnsignedInteger:] to return a non null pointer",
         );
-        unsafe { Self::from_owned_raw_unchecked(raw) }
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
     }
 
     fn as_bool(&self) -> bool {
@@ -948,15 +941,15 @@ impl std::fmt::Debug for NSError {
 /// - if non null, raw_ptr must be owned and of type T.
 /// - if non null, raw_unowned_error must not be owned (probably autoreleased) and point to a NSError.
 pub(crate) unsafe fn make_object_result_unchecked<T: NSObjectInterface>(
-    raw_ptr: RawNullableObjCPtr,
-    raw_unowned_error: RawNullableObjCPtr,
+    raw_ptr: NullableRawObjCPtr,
+    raw_unowned_error: NullableRawObjCPtr,
 ) -> Result<T::Owned, NSError> {
     // Create the object before checking the error,
     // because if both the new object and error are not null,
     // we want to the object to be properly released.
     let obj = raw_ptr
         .into_opt()
-        .map(|raw_ptr| T::from_owned_raw_unchecked(raw_ptr));
+        .map(|raw_ptr| T::Owned::from_owned_raw_unchecked(raw_ptr));
     match raw_unowned_error.into_opt() {
         None => Ok(obj.expect("expecting non null return value pointer when no error")),
         Some(raw_error) => Err(NSError::retain_unowned_raw_unchecked(raw_error)),
@@ -967,7 +960,7 @@ pub(crate) unsafe fn make_object_result_unchecked<T: NSObjectInterface>(
 /// - if non null, raw_unowned_error must not be owned (probably autoreleased) and point to a NSError.
 pub(crate) unsafe fn make_value_result_unchecked<T>(
     value: T,
-    raw_unowned_error: RawNullableObjCPtr,
+    raw_unowned_error: NullableRawObjCPtr,
 ) -> Result<T, NSError> {
     match raw_unowned_error.into_opt() {
         None => Ok(value),

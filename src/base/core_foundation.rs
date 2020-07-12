@@ -41,7 +41,7 @@ extern "C" {
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct RawCFTypeRef {
-    ptr: NonNull<std::ffi::c_void>,
+    pub(super) ptr: NonNull<std::ffi::c_void>,
 }
 
 // I would like to use Option<CFTypeRef> instead but I'm not sure its memory layout is the same.
@@ -65,7 +65,7 @@ impl From<RawCFTypeRef> for RawNullableCFTypeRef {
 
 #[repr(transparent)]
 pub struct OwnedCFTypeRef {
-    raw: RawCFTypeRef,
+    pub(super) raw: RawCFTypeRef,
 }
 
 impl OwnedCFTypeRef {

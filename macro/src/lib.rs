@@ -157,19 +157,23 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     Ok(quote! {
-        impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
-            type Owned = Self;
+        impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+            fn as_raw(&self) -> crate::base::RawObjCPtr {
+                self.ptr.as_raw()
+            }
+        }
 
-            unsafe fn from_owned_unchecked(ptr: crate::base::OwnedObjCPtr) -> Self::Owned {
-                Self::Owned {
+        impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
+            unsafe fn from_owned_unchecked(ptr: crate::base::OwnedObjCPtr) -> Self {
+                Self {
                     ptr,
                     #(#other_fields_init),*
                 }
             }
+        }
 
-            fn as_raw(&self) -> crate::base::RawObjCPtr {
-                self.ptr.as_raw()
-            }
+        impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
+            type Owned = Self;
 
             fn class() -> crate::base::ObjCClassPtr {
                 unsafe { #class_func() }

@@ -1,3 +1,8 @@
+use crate::base::*;
+
+//-------------------------------------------------------------------
+// CMTime
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct CMTimeValue(pub i64);
@@ -53,3 +58,34 @@ mod cmtime_tests {
         assert_eq!(std::mem::size_of::<CMTime>(), 24);
     }
 }
+
+//-------------------------------------------------------------------
+// CMFormatDescriptionRef
+
+pub trait CMFormatDescriptionRef: CFTypeRef {}
+
+#[repr(transparent)]
+#[derive(Clone)]
+pub struct CMFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl AsRawObjCPtr for CMFormatDescription {
+    fn as_raw(&self) -> RawObjCPtr {
+        self.ptr.as_raw().into()
+    }
+}
+
+impl TypedOwnedObjCPtr for CMFormatDescription {
+    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self {
+        Self { ptr: ptr.into() }
+    }
+}
+
+impl CFTypeRef for CMFormatDescription {
+    fn as_raw(&self) -> RawCFTypeRef {
+        self.ptr.as_raw()
+    }
+}
+
+impl CMFormatDescriptionRef for CMFormatDescription {}
