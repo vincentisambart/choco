@@ -1,8 +1,9 @@
 #![warn(rust_2018_idioms)]
 
+// TODO:
+// - field names should not be hardcoded.
+
 use quote::{format_ident, quote};
-use std::borrow::Cow;
-use syn::ext::IdentExt;
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, DeriveInput};
 
@@ -16,8 +17,8 @@ pub fn nsobjectprotocol_derive_wrapper(input: proc_macro::TokenStream) -> proc_m
 
 enum ChocoAttr {
     Owned(syn::Ident),
-    FrameworkIdent(syn::Ident),
-    FrameworkLitStr(syn::LitStr),
+    Framework(syn::Ident),
+    ObjCClass(syn::Ident),
     Base(syn::Ident),
 }
 
@@ -28,20 +29,16 @@ impl syn::parse::Parse for ChocoAttr {
             Ok(ChocoAttr::Base(attr_name))
         } else if attr_name == "framework" {
             input.parse::<syn::Token![=]>()?;
-            let lookahead = input.lookahead1();
-            if lookahead.peek(syn::Ident::peek_any) {
-                let framework_ident = syn::Ident::parse_any(input)?;
-                Ok(ChocoAttr::FrameworkIdent(framework_ident))
-            } else if lookahead.peek(syn::LitStr) {
-                let framework_litstr: syn::LitStr = input.parse()?;
-                Ok(ChocoAttr::FrameworkLitStr(framework_litstr))
-            } else {
-                Err(lookahead.error())
-            }
+            let ident: syn::Ident = input.parse()?;
+            Ok(ChocoAttr::Framework(ident))
+        } else if attr_name == "objc_class" {
+            input.parse::<syn::Token![=]>()?;
+            let ident: syn::Ident = input.parse()?;
+            Ok(ChocoAttr::ObjCClass(ident))
         } else if attr_name == "owned" {
             input.parse::<syn::Token![=]>()?;
-            let owner: syn::Ident = input.parse()?;
-            Ok(ChocoAttr::Owned(owner))
+            let ident: syn::Ident = input.parse()?;
+            Ok(ChocoAttr::Owned(ident))
         } else {
             Err(input.error("unexpected attribute name"))
         }
@@ -118,6 +115,15 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
         (&struct_name, false)
     };
 
+    let objc_class = if let Some(objc_class) = attrs.iter().find_map(|attr| match attr {
+        ChocoAttr::ObjCClass(objc_class) => Some(objc_class),
+        _ => None,
+    }) {
+        objc_class
+    } else {
+        owned
+    };
+
     let other_fields_init: Vec<proc_macro2::TokenStream> = if is_owned_different {
         Vec::new()
     } else {
@@ -134,54 +140,70 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
     };
 
     let location = if let Some(location) = attrs.iter().find_map(|attr| match attr {
-        ChocoAttr::Base(ident) => Some(Cow::Borrowed(ident)),
-        ChocoAttr::FrameworkIdent(ident) => Some(Cow::Borrowed(ident)),
-        ChocoAttr::FrameworkLitStr(lit) => {
-            let litstr_ident = proc_macro2::Ident::new(&lit.value(), lit.span());
-            Some(Cow::Owned(litstr_ident))
-        }
+        ChocoAttr::Base(ident) => Some(ident),
+        ChocoAttr::Framework(ident) => Some(ident),
         _ => None,
     }) {
         location
     } else {
         return Err(syn::Error::new(
             proc_macro2::Span::call_site(),
-            "where the struct comes from must be specified, for example #[choco(framework = \"Foundation\")]",
+            "where the struct comes from must be specified, for example #[choco(framework = Foundation)]",
         ));
     };
 
-    let class_func = format_ident!("choco_{}_{}_class", location, owned);
+    let class_func = format_ident!("choco_{}_{}_class", location, objc_class);
     let expect_message = format!(
         "expecting +[{} class] to return a non null pointer",
-        struct_name
+        objc_class
     );
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    Ok(quote! {
-        impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
-            fn as_raw(&self) -> crate::base::RawObjCPtr {
-                self.ptr.as_raw()
-            }
-        }
-
-        impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
-            unsafe fn from_owned_unchecked(ptr: crate::base::OwnedObjCPtr) -> Self {
-                Self {
-                    ptr,
-                    #(#other_fields_init),*
+    if is_owned_different {
+        Ok(quote! {
+            impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+                fn as_raw(&self) -> crate::base::RawObjCPtr {
+                    self.raw
                 }
             }
-        }
 
-        impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
-            type Owned = Self;
+            impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
+                type Owned = #owned;
 
-            fn class() -> crate::base::ObjCClassPtr {
-                unsafe { #class_func() }
-                    .into_opt()
-                    .expect(#expect_message)
+                fn class() -> crate::base::ObjCClassPtr {
+                    unsafe { #class_func() }
+                        .into_opt()
+                        .expect(#expect_message)
+                }
             }
-        }
-    })
+        })
+    } else {
+        Ok(quote! {
+            impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+                fn as_raw(&self) -> crate::base::RawObjCPtr {
+                    self.ptr.as_raw()
+                }
+            }
+
+            impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
+                unsafe fn from_owned_unchecked(ptr: crate::base::OwnedObjCPtr) -> Self {
+                    Self {
+                        ptr,
+                        #(#other_fields_init),*
+                    }
+                }
+            }
+
+            impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
+                type Owned = Self;
+
+                fn class() -> crate::base::ObjCClassPtr {
+                    unsafe { #class_func() }
+                        .into_opt()
+                        .expect(#expect_message)
+                }
+            }
+        })
+    }
 }

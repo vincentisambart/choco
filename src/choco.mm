@@ -85,6 +85,24 @@ NS_RETURNS_RETAINED NSObject *choco_base_NSObjectInterface_class_new(Class klass
 }
 
 //-------------------------------------------------------------------
+// NSCopying
+
+NS_RETURNS_RETAINED id choco_Foundation_NSCopyingProtocol_instance_copy(__unsafe_unretained NSObject *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ copy];
+    )
+}
+
+//-------------------------------------------------------------------
+// NSMutableCopying
+
+NS_RETURNS_RETAINED id choco_Foundation_NSMutableCopyingProtocol_instance_mutableCopy(__unsafe_unretained NSObject *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ mutableCopy];
+    )
+}
+
+//-------------------------------------------------------------------
 // NSString
 
 static_assert(std::is_same<NSStringEncoding, NSUInteger>::value, "expecting NSStringEncoding to be similar to NSUInteger");

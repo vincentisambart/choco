@@ -108,7 +108,7 @@ where
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAsset {
     ptr: OwnedObjCPtr,
 }
@@ -166,7 +166,7 @@ pub trait AVURLAssetInterface: AVAssetInterface {
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVURLAsset {
     ptr: OwnedObjCPtr,
 }
@@ -348,7 +348,7 @@ where
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAssetTrack {
     ptr: OwnedObjCPtr,
 }
@@ -393,7 +393,7 @@ pub trait AVAssetReaderInterface: NSObjectInterface {
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAssetReader {
     ptr: OwnedObjCPtr,
 }
@@ -420,7 +420,7 @@ pub trait AVAssetReaderTrackOutputInterface: NSObjectInterface {}
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAssetReaderTrackOutput {
     ptr: OwnedObjCPtr,
 }
@@ -447,7 +447,7 @@ pub trait AVAssetReaderOutputInterface: NSObjectInterface {}
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAssetReaderOutput {
     ptr: OwnedObjCPtr,
 }
@@ -474,7 +474,7 @@ pub trait AVAssetReaderSampleReferenceOutputInterface: AVAssetReaderOutputInterf
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
-#[choco(framework = "AVFoundation")]
+#[choco(framework = AVFoundation)]
 pub struct AVAssetReaderSampleReferenceOutput {
     ptr: OwnedObjCPtr,
 }

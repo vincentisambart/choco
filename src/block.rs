@@ -183,7 +183,7 @@ where
                 as *const InnerBlock<F, Args, Ret>
         };
         // Everything was copied to the heap by `_Block_copy`,
-        // and when the internal ref count gets to zero the copy will be dropped by `dispose`.
+        // and when the internal reference count gets to zero the copy will be dropped by `dispose`.
         // `clone` was not called so the original version should not be dropped.
         std::mem::forget(inner);
         Self { ptr }
@@ -210,7 +210,7 @@ where
     F: BlockInvoke<Args, Ret> + Send + Sync + 'static,
 {
     fn clone(&self) -> Self {
-        // When calling `_Block_copy` on a block already on the heap, no copy will occur, its ref count will just increase.
+        // When calling `_Block_copy` on a block already on the heap, no copy will occur, its reference count will just increase.
         let ptr = unsafe { _Block_copy(self.ptr as _) as *const InnerBlock<F, Args, Ret> };
         Self { ptr }
     }

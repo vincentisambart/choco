@@ -238,7 +238,8 @@ where
     Self: Clone,
     Self: AsRawObjCPtr,
 {
-    /// Owned version of the type. Most of the time it will be Self.
+    /// Owned (retained) version of the type. Most of the time it will be Self.
+    /// Unowned versions are not ref counted, generally for statics.
     type Owned: NSObjectProtocol + TypedOwnedObjCPtr;
 
     /// Objective-C class this struct represents.
