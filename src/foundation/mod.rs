@@ -135,6 +135,10 @@ impl From<NSURL> for NSObject {
 }
 impl IsKindOf<NSObject> for NSURL {}
 
+// A NSSURL is immutable so can be shared between threads.
+unsafe impl Send for NSURL {}
+unsafe impl Sync for NSURL {}
+
 #[cfg(test)]
 mod url_tests {
     use super::*;
@@ -247,6 +251,10 @@ impl std::ops::Sub for &NSDate {
     }
 }
 
+// A NSDate is immutable so can be shared between threads.
+unsafe impl Send for NSDate {}
+unsafe impl Sync for NSDate {}
+
 //-------------------------------------------------------------------
 // NSNumber
 
@@ -335,6 +343,10 @@ impl From<NSNumber> for NSObject {
 }
 impl IsKindOf<NSObject> for NSNumber {}
 
+// A NSNumber is immutable so can be shared between threads.
+unsafe impl Send for NSNumber {}
+unsafe impl Sync for NSNumber {}
+
 #[cfg(test)]
 mod number_tests {
     use super::*;
@@ -393,6 +405,10 @@ impl From<NSError> for NSObject {
     }
 }
 impl IsKindOf<NSObject> for NSError {}
+
+// A NSError is immutable so can be shared between threads.
+unsafe impl Send for NSError {}
+unsafe impl Sync for NSError {}
 
 impl std::fmt::Debug for NSError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
