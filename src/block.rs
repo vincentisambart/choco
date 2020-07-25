@@ -1,4 +1,5 @@
 use crate::base::*;
+
 /// Main documentation sources about C blocks and how they behave:
 /// - <https://clang.llvm.org/docs/Block-ABI-Apple.html>
 /// - BlocksRuntime in LLVM's `compiler-rt` source code: <https://github.com/llvm/llvm-project/tree/master/compiler-rt/lib/BlocksRuntime>
@@ -26,7 +27,7 @@ const BLOCK_HAS_COPY_DISPOSE: c_int = 1 << 25;
 ///
 /// It looks like something we might be interested in, but looking at the compiler-rt code,
 /// it does not seem to do anything when the Objective-C GC is disabled, and Apple does not support that GC anymore.
-// const BLOCK_HAS_CTOR: c_int = 1 << 26;
+const BLOCK_HAS_CTOR: c_int = 1 << 26;
 
 #[repr(C)]
 struct BlockDescriptor {
@@ -122,6 +123,10 @@ where
         Self { inner }
     }
 
+    /// # Safety
+    /// You must make sure the StackBlock is kept alive while that reference is being accessed,
+    /// at least until the block gets copied.
+    /// Mainly `unsafe` to have an API closer to `HeapBlock`.
     pub unsafe fn block_ref(&self) -> &std::cell::UnsafeCell<BlockHeader> {
         &self.inner.header
     }
@@ -184,6 +189,8 @@ where
         Self { ptr }
     }
 
+    /// # Safety
+    /// You must be sure the internal ref count doesn't get to zero while the reference is alive.
     pub unsafe fn block_ref(&self) -> &std::cell::UnsafeCell<BlockHeader> {
         &(*self.ptr).header
     }

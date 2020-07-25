@@ -1,3 +1,5 @@
+#![warn(rust_2018_idioms)]
+
 use quote::{format_ident, quote};
 use std::borrow::Cow;
 use syn::ext::IdentExt;
@@ -20,7 +22,7 @@ enum ChocoAttr {
 }
 
 impl syn::parse::Parse for ChocoAttr {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    fn parse(input: syn::parse::ParseStream<'_>) -> syn::Result<Self> {
         let attr_name: syn::Ident = input.parse()?;
         if attr_name == "base" {
             Ok(ChocoAttr::Base(attr_name))
