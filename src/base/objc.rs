@@ -144,9 +144,6 @@ impl From<RawObjCPtr> for super::core_foundation::RawCFTypeRef {
 pub struct OwnedObjCPtr {
     raw: RawObjCPtr,
 }
-// TODO: Do we really need that...?
-unsafe impl Send for OwnedObjCPtr {}
-unsafe impl Sync for OwnedObjCPtr {}
 
 impl OwnedObjCPtr {
     /// # Safety

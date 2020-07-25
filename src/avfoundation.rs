@@ -124,6 +124,10 @@ impl From<AVAsset> for NSObject {
 }
 impl IsKindOf<NSObject> for AVAsset {}
 
+// AVAsset should be mostly fine to use from multiple threads at the same time.
+unsafe impl Send for AVAsset {}
+unsafe impl Sync for AVAsset {}
+
 //-------------------------------------------------------------------
 // AVURLAsset
 
@@ -192,6 +196,10 @@ impl From<AVURLAsset> for AVAsset {
 
 impl IsKindOf<NSObject> for AVURLAsset {}
 impl IsKindOf<AVAsset> for AVURLAsset {}
+
+// AVAsset should be mostly fine to use from multiple threads at the same time.
+unsafe impl Send for AVURLAsset {}
+unsafe impl Sync for AVURLAsset {}
 
 //-------------------------------------------------------------------
 // AVMediaType
