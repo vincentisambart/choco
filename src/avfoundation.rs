@@ -62,7 +62,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
     ) where
         Key: NSStringInterface + TypedOwnedObjCPtr,
         Keys: NSArrayInterface<Key>,
-        CompletionHandler: Fn() + Send + Sync + 'static,
+        CompletionHandler: Fn() + Send + 'static,
     {
         let self_raw = self.as_raw();
         let block = HeapBlock::new(handler);

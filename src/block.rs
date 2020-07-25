@@ -132,14 +132,14 @@ where
 /// Compared with StackBlock, it does not require `Clone`, but it always makes an allocation.
 pub struct HeapBlock<F, Args, Ret>
 where
-    F: BlockInvoke<Args, Ret> + Send + Sync + 'static,
+    F: BlockInvoke<Args, Ret> + Send + 'static,
 {
     ptr: *const InnerBlock<F, Args, Ret>,
 }
 
 impl<F, Args, Ret> HeapBlock<F, Args, Ret>
 where
-    F: BlockInvoke<Args, Ret> + Send + Sync + 'static,
+    F: BlockInvoke<Args, Ret> + Send + 'static,
 {
     unsafe extern "C" fn copy(_dst: *mut c_void, _src: *const c_void) {
         // The runtime did a `memmove` for us, nothing to do.
@@ -191,7 +191,7 @@ where
 
 impl<F, Args, Ret> Drop for HeapBlock<F, Args, Ret>
 where
-    F: BlockInvoke<Args, Ret> + Send + Sync + 'static,
+    F: BlockInvoke<Args, Ret> + Send + 'static,
 {
     fn drop(&mut self) {
         unsafe { _Block_release(self.ptr as _) };
