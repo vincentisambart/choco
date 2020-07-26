@@ -1,4 +1,5 @@
 use crate::base::*;
+use choco_macro::fourcc;
 
 //-------------------------------------------------------------------
 // CMTime
@@ -62,7 +63,32 @@ mod cmtime_tests {
 //-------------------------------------------------------------------
 // CMFormatDescriptionRef
 
-pub trait CMFormatDescriptionRef: CFTypeRef {}
+#[link(name = "CoreMedia", kind = "framework")]
+extern "C" {
+    fn CMFormatDescriptionGetMediaType(desc: RawCFTypeRef) -> CMMediaType;
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct CMMediaType(pub u32);
+
+impl CMMediaType {
+    pub const VIDEO: Self = Self(fourcc!("vide"));
+    pub const AUDIO: Self = Self(fourcc!("soun"));
+    pub const MUXED: Self = Self(fourcc!("muxx"));
+    pub const TEXT: Self = Self(fourcc!("text"));
+    pub const CLOSED_CAPTION: Self = Self(fourcc!("clcp"));
+    pub const SUBTITLE: Self = Self(fourcc!("sbtl"));
+    pub const TIME_CODE: Self = Self(fourcc!("tmcd"));
+    pub const METADATA: Self = Self(fourcc!("meta"));
+}
+
+pub trait CMFormatDescriptionRef: CFTypeRef {
+    fn media_type(&self) -> CMMediaType {
+        let self_raw = self.as_raw();
+        unsafe { CMFormatDescriptionGetMediaType(self_raw) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone)]
