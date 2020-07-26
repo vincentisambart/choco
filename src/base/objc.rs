@@ -30,6 +30,11 @@ pub(crate) struct OpaqueObjCClass {
     _private: [u8; 0],
 }
 
+#[repr(C)]
+struct OpaqueAutoreleasePool {
+    _private: [u8; 0],
+}
+
 extern "C" {
     fn choco_base_NSObjectProtocol_instance_hash(self_: RawObjCPtr) -> NSUInteger;
     fn choco_base_NSObjectProtocol_instance_isEqual(
@@ -52,8 +57,8 @@ extern "C" {
 // ARC runtime support - https://clang.llvm.org/docs/AutomaticReferenceCounting.html#runtime-support
 #[link(name = "objc", kind = "dylib")]
 extern "C" {
-    // fn objc_autoreleasePoolPush() -> *const std::ffi::c_void;
-    // fn objc_autoreleasePoolPop(pool: *const std::ffi::c_void);
+    fn objc_autoreleasePoolPush() -> Option<NonNull<OpaqueAutoreleasePool>>;
+    fn objc_autoreleasePoolPop(pool: NonNull<OpaqueAutoreleasePool>);
     fn objc_release(value: RawObjCPtr);
     fn objc_retain(value: RawObjCPtr) -> NullableRawObjCPtr;
     fn class_getName(class: ObjCClassPtr) -> *const i8;
@@ -325,3 +330,26 @@ mod tests {
 /// Marker trait used for handling of type parameters in NSArray and NSDictionary.
 pub trait IsKindOf<T: TypedOwnedObjCPtr>: AsRawObjCPtr {}
 impl<T: TypedOwnedObjCPtr> IsKindOf<T> for T {}
+
+struct AutoreleasePoolGuard {
+    pool: NonNull<OpaqueAutoreleasePool>,
+}
+
+impl AutoreleasePoolGuard {
+    fn push() -> AutoreleasePoolGuard {
+        let pool = unsafe { objc_autoreleasePoolPush() }
+            .expect("expecting objc_autoreleasePoolPush() to return a non-null value");
+        AutoreleasePoolGuard { pool }
+    }
+}
+
+impl Drop for AutoreleasePoolGuard {
+    fn drop(&mut self) {
+        unsafe { objc_autoreleasePoolPop(self.pool) }
+    }
+}
+
+pub fn autorelease_pool<F: FnOnce()>(f: F) {
+    let _pool = AutoreleasePoolGuard::push();
+    f()
+}
