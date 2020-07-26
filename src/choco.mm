@@ -184,13 +184,13 @@ NSUInteger choco_Foundation_NSArrayInterface_instance_count(__unsafe_unretained 
 
 NS_RETURNS_RETAINED id choco_Foundation_NSArrayInterface_instance_firstObject(__unsafe_unretained NSArray *self_) {
     ABORT_ON_EXCEPTION(
-        return [self_ firstObject];
+        return self_.firstObject;
     )
 }
 
 NS_RETURNS_RETAINED id choco_Foundation_NSArrayInterface_instance_lastObject(__unsafe_unretained NSArray *self_) {
     ABORT_ON_EXCEPTION(
-        return [self_ lastObject];
+        return self_.lastObject;
     )
 }
 
