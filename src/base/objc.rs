@@ -182,17 +182,17 @@ impl Clone for OwnedObjCPtr {
 
 impl From<super::core_foundation::OwnedCFTypeRef> for OwnedObjCPtr {
     fn from(owned: super::core_foundation::OwnedCFTypeRef) -> Self {
-        Self {
-            raw: owned.raw.into(),
-        }
+        let raw = owned.raw.into();
+        std::mem::forget(owned);
+        Self { raw }
     }
 }
 
 impl From<OwnedObjCPtr> for super::core_foundation::OwnedCFTypeRef {
     fn from(owned: OwnedObjCPtr) -> Self {
-        Self {
-            raw: owned.raw.into(),
-        }
+        let raw = owned.raw.into();
+        std::mem::forget(owned);
+        Self { raw }
     }
 }
 
