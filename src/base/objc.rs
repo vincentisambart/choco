@@ -349,7 +349,7 @@ impl Drop for AutoreleasePoolGuard {
     }
 }
 
-pub fn autorelease_pool<F: FnOnce()>(f: F) {
+pub fn autorelease_pool<Ret, F: FnOnce() -> Ret>(f: F) -> Ret {
     let _pool = AutoreleasePoolGuard::push();
     f()
 }
