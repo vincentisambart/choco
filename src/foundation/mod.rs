@@ -48,8 +48,10 @@ pub trait NSMutableCopyingProtocol: NSObjectInterface {
 //-------------------------------------------------------------------
 // NSFastEnumeration
 
-// The [official documentation about NSFastEnumeration](https://developer.apple.com/documentation/foundation/nsfastenumeration?language=objc) is a bit sparse.
-// [How Swift implements it](https://github.com/apple/swift/blob/3a50f93c60f6718ccdb9f685c57e8ac8188e1788/stdlib/public/Darwin/Foundation/NSFastEnumeration.swift) can be helpful.
+// Useful documentation:
+// - NSFastEnumeration's Apple documentation https://developer.apple.com/documentation/foundation/nsfastenumeration?language=objc
+// - How clang rewrites Objective-C's for loops https://github.com/llvm/llvm-project/blob/ee068aafbc5c6722158d5113290a211503e1cfe4/clang/lib/Frontend/Rewrite/RewriteModernObjC.cpp#L1651-L1682
+// - How Swift implements it https://github.com/apple/swift/blob/3a50f93c60f6718ccdb9f685c57e8ac8188e1788/stdlib/public/Darwin/Foundation/NSFastEnumeration.swift
 
 extern "C" {
     fn choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(
@@ -80,11 +82,15 @@ impl NSFastEnumerationState {
 }
 
 const FAST_ENUMERATOR_BUFFER_LEN: usize = 16;
-pub struct NSFastEnumerationIter<'enumerable, Item> {
+pub struct NSFastEnumerationIter<'enumerable, Item>
+where
+    Item: TypedOwnedObjCPtr,
+{
     enumerable: RawObjCPtr,
     /// Note that the state.items might not point to buffer but can be using storage local to the enumerable.
     buffer: [NullableRawObjCPtr; FAST_ENUMERATOR_BUFFER_LEN],
     state: NSFastEnumerationState,
+    start_mutations: usize,
     index: usize,
     /// next index to read in state.items
     available_count: usize,
@@ -104,6 +110,7 @@ where
             enumerable: enumerable.as_raw(),
             buffer: [NullableRawObjCPtr::empty(); FAST_ENUMERATOR_BUFFER_LEN],
             state: NSFastEnumerationState::new(),
+            start_mutations: 0,
             index: 0,
             available_count: 0,
             _marker: std::marker::PhantomData,
@@ -111,7 +118,7 @@ where
     }
 }
 
-impl<'a, Item> Iterator for NSFastEnumerationIter<'a, Item>
+impl<'enumerable, Item> Iterator for NSFastEnumerationIter<'enumerable, Item>
 where
     Item: TypedOwnedObjCPtr,
 {
@@ -134,6 +141,10 @@ where
             if self.available_count == 0 {
                 return None;
             }
+
+            self.start_mutations = unsafe { self.state.mutations.read() };
+        } else if unsafe { self.state.mutations.read() } != self.start_mutations {
+            panic!("mutation detected during iteration");
         }
 
         let obj = unsafe { self.state.items.add(self.index).read() }
