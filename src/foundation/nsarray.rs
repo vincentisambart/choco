@@ -88,6 +88,7 @@ pub struct NSArray<T: TypedOwnedObjCPtr> {
 
 impl<T: TypedOwnedObjCPtr> NSObjectInterface for NSArray<T> {}
 impl<T: TypedOwnedObjCPtr> NSArrayInterface<T> for NSArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSFastEnumeration<T> for NSArray<T> {}
 
 impl<T: TypedOwnedObjCPtr> From<NSArray<T>> for NSObject {
     fn from(obj: NSArray<T>) -> Self {
@@ -152,6 +153,7 @@ pub struct ImmutableNSArray<T: TypedOwnedObjCPtr> {
 
 impl<T: TypedOwnedObjCPtr> NSObjectInterface for ImmutableNSArray<T> {}
 impl<T: TypedOwnedObjCPtr> NSArrayInterface<T> for ImmutableNSArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSFastEnumeration<T> for ImmutableNSArray<T> {}
 
 impl<T: TypedOwnedObjCPtr> From<ImmutableNSArray<T>> for NSObject {
     fn from(obj: ImmutableNSArray<T>) -> Self {
@@ -210,6 +212,7 @@ pub struct NSMutableArray<T: TypedOwnedObjCPtr> {
 impl<T: TypedOwnedObjCPtr> NSObjectInterface for NSMutableArray<T> {}
 impl<T: TypedOwnedObjCPtr> NSArrayInterface<T> for NSMutableArray<T> {}
 impl<T: TypedOwnedObjCPtr> NSMutableArrayInterface<T> for NSMutableArray<T> {}
+impl<T: TypedOwnedObjCPtr> NSFastEnumeration<T> for NSMutableArray<T> {}
 
 impl<T: TypedOwnedObjCPtr> From<NSMutableArray<T>> for NSObject {
     fn from(obj: NSMutableArray<T>) -> Self {

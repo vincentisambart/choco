@@ -103,6 +103,17 @@ NS_RETURNS_RETAINED id choco_Foundation_NSMutableCopyingProtocol_instance_mutabl
 }
 
 //-------------------------------------------------------------------
+// NSFastEnumeration
+
+static_assert(sizeof(NSFastEnumerationState) == 64, "expecting NSFastEnumerationState to be of size 64");
+
+NSUInteger choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(__unsafe_unretained id<NSFastEnumeration> self_, NSFastEnumerationState *state, id  _Nullable __unsafe_unretained *buffer, NSUInteger len) {
+    ABORT_ON_EXCEPTION(
+        return [self_ countByEnumeratingWithState:state objects:buffer count:len];
+    )
+}
+
+//-------------------------------------------------------------------
 // NSString
 
 static_assert(std::is_same<NSStringEncoding, NSUInteger>::value, "expecting NSStringEncoding to be similar to NSUInteger");

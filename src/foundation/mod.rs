@@ -46,6 +46,148 @@ pub trait NSMutableCopyingProtocol: NSObjectInterface {
 }
 
 //-------------------------------------------------------------------
+// NSFastEnumeration
+
+// The [official documentation about NSFastEnumeration](https://developer.apple.com/documentation/foundation/nsfastenumeration?language=objc) is a bit sparse.
+// [How Swift implements it](https://github.com/apple/swift/blob/3a50f93c60f6718ccdb9f685c57e8ac8188e1788/stdlib/public/Darwin/Foundation/NSFastEnumeration.swift) can be helpful.
+
+extern "C" {
+    fn choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(
+        self_: RawObjCPtr,
+        state: *mut NSFastEnumerationState,
+        buffer: *mut NullableRawObjCPtr,
+        len: usize,
+    ) -> usize;
+}
+
+#[repr(C)]
+struct NSFastEnumerationState {
+    state: usize,
+    items: *mut NullableRawObjCPtr,
+    mutations: *mut usize,
+    extra: [usize; 5],
+}
+
+impl NSFastEnumerationState {
+    fn new() -> Self {
+        Self {
+            state: 0,
+            items: std::ptr::null_mut(),
+            mutations: std::ptr::null_mut(),
+            extra: [0; 5],
+        }
+    }
+}
+
+const FAST_ENUMERATOR_BUFFER_LEN: usize = 16;
+pub struct NSFastEnumerationIter<'enumerable, Item> {
+    enumerable: RawObjCPtr,
+    /// Note that the state.items might not point to buffer but can be using storage local to the enumerable.
+    buffer: [NullableRawObjCPtr; FAST_ENUMERATOR_BUFFER_LEN],
+    state: NSFastEnumerationState,
+    index: usize,
+    /// next index to read in state.items
+    available_count: usize,
+    /// count of items currently available in state.items
+    _marker: std::marker::PhantomData<&'enumerable Item>,
+}
+
+impl<'enumerable, Item> NSFastEnumerationIter<'enumerable, Item>
+where
+    Item: TypedOwnedObjCPtr,
+{
+    fn new<Enumerable>(enumerable: &'enumerable Enumerable) -> Self
+    where
+        Enumerable: NSFastEnumeration<Item>,
+    {
+        Self {
+            enumerable: enumerable.as_raw(),
+            buffer: [NullableRawObjCPtr::empty(); FAST_ENUMERATOR_BUFFER_LEN],
+            state: NSFastEnumerationState::new(),
+            index: 0,
+            available_count: 0,
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'a, Item> Iterator for NSFastEnumerationIter<'a, Item>
+where
+    Item: TypedOwnedObjCPtr,
+{
+    type Item = Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index + 1 > self.available_count {
+            self.index = 0;
+
+            let buffer_ptr = self.buffer.as_mut_ptr();
+            self.available_count = unsafe {
+                choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(
+                    self.enumerable,
+                    &mut self.state,
+                    buffer_ptr,
+                    FAST_ENUMERATOR_BUFFER_LEN,
+                )
+            };
+
+            if self.available_count == 0 {
+                return None;
+            }
+        }
+
+        let obj = unsafe { self.state.items.add(self.index).read() }
+            .into_opt()
+            .expect("expecting items to be non null");
+        self.index += 1;
+
+        Some(unsafe { Item::retain_unowned_raw_unchecked(obj) })
+    }
+}
+
+pub trait NSFastEnumeration<Item>: NSObjectInterface
+where
+    Item: TypedOwnedObjCPtr,
+{
+    fn iter(&'_ self) -> NSFastEnumerationIter<'_, Item> {
+        NSFastEnumerationIter::new(self)
+    }
+}
+
+#[cfg(test)]
+mod nsfastenumeration_tests {
+    use super::*;
+
+    #[test]
+    fn size() {
+        assert_eq!(std::mem::size_of::<NSFastEnumerationState>(), 64);
+    }
+
+    #[test]
+    fn iter() {
+        // Should test most length-related corner cases
+        for array_len in (0..FAST_ENUMERATOR_BUFFER_LEN * 3) {
+            autorelease_pool(|| {
+                let array: NSMutableArray<NSString> = NSMutableArray::new();
+                for i in 0..array_len {
+                    let text = format!("item{}", i);
+                    array.add_object(&NSString::new_with_str(&text));
+                }
+                let vec = array
+                    .iter()
+                    .map(|item| item.to_string().unwrap())
+                    .collect::<Vec<_>>();
+                assert_eq!(vec.len(), array_len);
+                for (i, item) in vec.iter().enumerate() {
+                    let expected_text = format!("item{}", i);
+                    assert_eq!(item, &expected_text);
+                }
+            });
+        }
+    }
+}
+
+//-------------------------------------------------------------------
 // NSURL
 
 extern "C" {

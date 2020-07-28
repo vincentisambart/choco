@@ -59,6 +59,10 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionary
     for NSDictionary<K, V>
 {
 }
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
+    for NSDictionary<K, V>
+{
+}
 
 impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSDictionary<K, V>>
     for NSObject
@@ -97,6 +101,10 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInte
 {
 }
 impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
+    for ImmutableNSDictionary<K, V>
+{
+}
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
     for ImmutableNSDictionary<K, V>
 {
 }
@@ -209,6 +217,10 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionary
 }
 impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
     NSMutableDictionaryInterface<K, V> for NSMutableDictionary<K, V>
+{
+}
+impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
+    for NSMutableDictionary<K, V>
 {
 }
 
