@@ -152,6 +152,11 @@ BOOL choco_Foundation_NSStringInterface_instance_isEqualToString(__unsafe_unreta
 }
 
 //-------------------------------------------------------------------
+// NSMutableString
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSMutableString)
+
+//-------------------------------------------------------------------
 // NSURL
 
 CLASS_FUNCTION_DEFINITION(Foundation, NSURL)

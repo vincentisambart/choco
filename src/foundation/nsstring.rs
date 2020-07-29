@@ -166,6 +166,10 @@ impl NSCopyingProtocol for NSString {
     type Immutable = ImmutableNSString;
 }
 
+impl NSMutableCopyingProtocol for NSString {
+    type Mutable = NSMutableString;
+}
+
 #[cfg(test)]
 mod string_tests {
     use super::*;
@@ -221,6 +225,7 @@ impl From<ImmutableNSString> for NSString {
 }
 
 impl IsKindOf<NSObject> for ImmutableNSString {}
+impl IsKindOf<NSString> for ImmutableNSString {}
 
 impl std::cmp::PartialEq for ImmutableNSString {
     fn eq(&self, other: &ImmutableNSString) -> bool {
@@ -239,6 +244,10 @@ impl std::cmp::PartialEq<ImmutableNSString> for StaticNSString {
     fn eq(&self, other: &ImmutableNSString) -> bool {
         self.is_equal_to_string(other)
     }
+}
+
+impl NSMutableCopyingProtocol for ImmutableNSString {
+    type Mutable = NSMutableString;
 }
 
 // An ImmutableNSString is known to be immutable so can be shared between threads.
@@ -289,6 +298,49 @@ impl std::cmp::PartialEq<StaticNSString> for ImmutableNSString {
     }
 }
 
+impl NSMutableCopyingProtocol for StaticNSString {
+    type Mutable = NSMutableString;
+}
+
 // A StaticNSString is known to be immutable so can be shared between threads.
 unsafe impl Send for StaticNSString {}
 unsafe impl Sync for StaticNSString {}
+
+//-------------------------------------------------------------------
+// NSMutableString interface
+
+extern "C" {
+    fn choco_Foundation_NSMutableString_class() -> NullableObjCClassPtr;
+}
+
+pub trait NSMutableStringInterface: NSObjectInterface {}
+
+//-------------------------------------------------------------------
+// NSMutableString
+
+#[repr(transparent)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = Foundation)]
+pub struct NSMutableString {
+    ptr: OwnedObjCPtr,
+}
+
+impl NSObjectInterface for NSMutableString {}
+impl NSStringInterface for NSMutableString {}
+impl NSMutableStringInterface for NSMutableString {}
+
+impl From<NSMutableString> for NSObject {
+    fn from(obj: NSMutableString) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+impl IsKindOf<NSObject> for NSMutableString {}
+impl IsKindOf<NSString> for NSMutableString {}
+
+impl NSCopyingProtocol for NSMutableString {
+    type Immutable = ImmutableNSString;
+}
+
+impl NSMutableCopyingProtocol for NSMutableString {
+    type Mutable = ImmutableNSString;
+}
