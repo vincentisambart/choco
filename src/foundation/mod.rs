@@ -87,14 +87,14 @@ where
     Item: TypedOwnedObjCPtr,
 {
     enumerable: RawObjCPtr,
-    /// Note that the state.items might not point to buffer but can be using storage local to the enumerable.
+    /// state.items will not always point to this buffer, it can be using storage local to the enumerable.
     buffer: [NullableRawObjCPtr; FAST_ENUMERATOR_BUFFER_LEN],
     state: NSFastEnumerationState,
     start_mutations: usize,
-    index: usize,
     /// next index to read in state.items
-    available_count: usize,
+    index: usize,
     /// count of items currently available in state.items
+    preloaded_count: usize,
     _marker: std::marker::PhantomData<&'enumerable Item>,
 }
 
@@ -112,7 +112,7 @@ where
             state: NSFastEnumerationState::new(),
             start_mutations: 0,
             index: 0,
-            available_count: 0,
+            preloaded_count: 0,
             _marker: std::marker::PhantomData,
         }
     }
@@ -125,11 +125,11 @@ where
     type Item = Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index + 1 > self.available_count {
+        if self.index + 1 > self.preloaded_count {
             self.index = 0;
 
             let buffer_ptr = self.buffer.as_mut_ptr();
-            self.available_count = unsafe {
+            self.preloaded_count = unsafe {
                 choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(
                     self.enumerable,
                     &mut self.state,
@@ -137,8 +137,12 @@ where
                     FAST_ENUMERATOR_BUFFER_LEN,
                 )
             };
+            debug_assert!(
+                buffer_ptr != self.state.items || self.preloaded_count < FAST_ENUMERATOR_BUFFER_LEN,
+                "when using our provided buffer, a count longer than the buffer is unexpected"
+            );
 
-            if self.available_count == 0 {
+            if self.preloaded_count == 0 {
                 return None;
             }
 
@@ -152,6 +156,7 @@ where
             .expect("expecting items to be non null");
         self.index += 1;
 
+        // Make sure we return an owned value.
         Some(unsafe { Item::retain_unowned_raw_unchecked(obj) })
     }
 }
