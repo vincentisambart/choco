@@ -1,4 +1,5 @@
 use crate::base::*;
+use crate::core_graphics::CGRect;
 use choco_macro::fourcc;
 
 //-------------------------------------------------------------------
@@ -65,7 +66,13 @@ mod cmtime_tests {
 
 #[link(name = "CoreMedia", kind = "framework")]
 extern "C" {
+    fn CMFormatDescriptionGetTypeID() -> CFTypeID;
     fn CMFormatDescriptionGetMediaType(desc: RawCFTypeRef) -> CMMediaType;
+    fn CMVideoFormatDescriptionGetCleanAperture(
+        video_desc: RawCFTypeRef,
+        origin_is_at_top_left: Boolean,
+    ) -> CGRect;
+    fn CMVideoFormatDescriptionGetDimensions(video_desc: RawCFTypeRef) -> CMVideoDimensions;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -83,7 +90,11 @@ impl CMMediaType {
     pub const METADATA: Self = Self(fourcc!("meta"));
 }
 
-pub trait CMFormatDescriptionRef: CFTypeRef {
+pub trait CMFormatDescriptionInterface: CFTypeInterface {
+    fn type_id() -> CFTypeID {
+        unsafe { CMFormatDescriptionGetTypeID() }
+    }
+
     fn media_type(&self) -> CMMediaType {
         let self_raw = self.as_raw();
         unsafe { CMFormatDescriptionGetMediaType(self_raw) }
@@ -108,10 +119,29 @@ impl TypedOwnedObjCPtr for CMFormatDescription {
     }
 }
 
-impl CFTypeRef for CMFormatDescription {
+impl CFTypeInterface for CMFormatDescription {
     fn as_raw(&self) -> RawCFTypeRef {
         self.ptr.as_raw()
     }
 }
 
-impl CMFormatDescriptionRef for CMFormatDescription {}
+impl CMFormatDescriptionInterface for CMFormatDescription {}
+
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[repr(C)]
+pub struct CMVideoDimensions {
+    width: i32,
+    height: i32,
+}
+
+pub trait CMVideoFormatDescriptionInterface: CMFormatDescriptionInterface {
+    fn clean_aperture(&self, origin_is_at_top_left: bool) -> CGRect {
+        let self_raw = self.as_raw();
+        unsafe { CMVideoFormatDescriptionGetCleanAperture(self_raw, origin_is_at_top_left.into()) }
+    }
+
+    fn dimensions(&self) -> CMVideoDimensions {
+        let self_raw = self.as_raw();
+        unsafe { CMVideoFormatDescriptionGetDimensions(self_raw) }
+    }
+}

@@ -23,6 +23,11 @@ impl From<bool> for Boolean {
     }
 }
 
+#[repr(C)]
+pub(crate) struct OpaqueCFType {
+    _private: [u8; 0],
+}
+
 #[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct CFTypeID(usize);
@@ -41,14 +46,14 @@ extern "C" {
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct RawCFTypeRef {
-    pub(super) ptr: NonNull<std::ffi::c_void>,
+    pub(super) ptr: NonNull<OpaqueCFType>,
 }
 
-// I would like to use Option<CFTypeRef> instead but I'm not sure its memory layout is the same.
+// I would like to use Option<RawCFTypeRef> instead but I'm not sure its memory layout is the same.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct RawNullableCFTypeRef {
-    ptr: Option<NonNull<std::ffi::c_void>>,
+    ptr: Option<NonNull<OpaqueCFType>>,
 }
 
 impl RawNullableCFTypeRef {
@@ -98,7 +103,7 @@ impl Clone for OwnedCFTypeRef {
     }
 }
 
-pub trait CFTypeRef
+pub trait CFTypeInterface
 where
     // to be able to have default implementations of methods returning Self
     Self: Sized,
@@ -107,7 +112,7 @@ where
 {
     fn as_raw(&self) -> RawCFTypeRef;
 
-    fn equal(&self, other: &impl CFTypeRef) -> bool {
+    fn equal(&self, other: &impl CFTypeInterface) -> bool {
         let self_raw = self.as_raw();
         let other_raw = other.as_raw();
         let ret = unsafe { CFEqual(self_raw, other_raw) };
