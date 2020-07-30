@@ -1,8 +1,5 @@
 #![warn(rust_2018_idioms)]
 
-// TODO:
-// - field names should not be hardcoded.
-
 use quote::{format_ident, quote, ToTokens};
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, DeriveInput};
@@ -124,6 +121,19 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
         owned
     };
 
+    let main_field = match data.fields.iter().next() {
+        Some(first_field) => match &first_field.ident {
+            Some(ident) => proc_macro2::TokenTree::Ident(ident.clone()),
+            None => proc_macro2::TokenTree::Literal(proc_macro2::Literal::u8_unsuffixed(0)),
+        },
+        None => {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "the struct should have at least one field",
+            ))
+        }
+    };
+
     let other_fields_init: Vec<proc_macro2::TokenStream> = if is_owned_different {
         Vec::new()
     } else {
@@ -164,7 +174,7 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
         Ok(quote! {
             impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
                 fn as_raw(&self) -> crate::base::RawObjCPtr {
-                    self.raw
+                    self.#main_field
                 }
             }
 
@@ -182,14 +192,14 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
         Ok(quote! {
             impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
                 fn as_raw(&self) -> crate::base::RawObjCPtr {
-                    self.ptr.as_raw()
+                    self.#main_field.as_raw()
                 }
             }
 
             impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
-                unsafe fn from_owned_unchecked(ptr: crate::base::OwnedObjCPtr) -> Self {
+                unsafe fn from_owned_unchecked(#main_field: crate::base::OwnedObjCPtr) -> Self {
                     Self {
-                        ptr,
+                        #main_field,
                         #(#other_fields_init),*
                     }
                 }
