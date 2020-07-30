@@ -1,6 +1,6 @@
 use crate::base::*;
 use crate::core_graphics::CGRect;
-use choco_macro::fourcc;
+use choco_macro::{fourcc, CFType};
 
 //-------------------------------------------------------------------
 // CMTime
@@ -80,14 +80,44 @@ extern "C" {
 pub struct CMMediaType(pub u32);
 
 impl CMMediaType {
-    pub const VIDEO: Self = Self(fourcc!("vide"));
     pub const AUDIO: Self = Self(fourcc!("soun"));
+    pub const VIDEO: Self = Self(fourcc!("vide"));
     pub const MUXED: Self = Self(fourcc!("muxx"));
+    pub const METADATA: Self = Self(fourcc!("meta"));
     pub const TEXT: Self = Self(fourcc!("text"));
+    pub const TIME_CODE: Self = Self(fourcc!("tmcd"));
     pub const CLOSED_CAPTION: Self = Self(fourcc!("clcp"));
     pub const SUBTITLE: Self = Self(fourcc!("sbtl"));
-    pub const TIME_CODE: Self = Self(fourcc!("tmcd"));
-    pub const METADATA: Self = Self(fourcc!("meta"));
+}
+
+pub enum TypedCMFormatDescription {
+    Audio(CMAudioFormatDescription),
+    Video(CMVideoFormatDescription),
+    Muxed(CMMuxedFormatDescription),
+    Metadata(CMMetadataFormatDescription),
+    Text(CMTextFormatDescription),
+    TimeCode(CMTimeCodeFormatDescription),
+    ClosedCaption(CMClosedCaptionFormatDescription),
+    /// `Unknown` includes the subtitle media type Apple doesn't have a type for.
+    Unknown(CMFormatDescription),
+}
+
+impl From<CMFormatDescription> for TypedCMFormatDescription {
+    fn from(desc: CMFormatDescription) -> Self {
+        use TypedCMFormatDescription::*;
+        match desc.media_type() {
+            CMMediaType::AUDIO => Audio(CMAudioFormatDescription { ptr: desc.ptr }),
+            CMMediaType::VIDEO => Video(CMVideoFormatDescription { ptr: desc.ptr }),
+            CMMediaType::MUXED => Muxed(CMMuxedFormatDescription { ptr: desc.ptr }),
+            CMMediaType::METADATA => Metadata(CMMetadataFormatDescription { ptr: desc.ptr }),
+            CMMediaType::TEXT => Text(CMTextFormatDescription { ptr: desc.ptr }),
+            CMMediaType::TIME_CODE => TimeCode(CMTimeCodeFormatDescription { ptr: desc.ptr }),
+            CMMediaType::CLOSED_CAPTION => {
+                ClosedCaption(CMClosedCaptionFormatDescription { ptr: desc.ptr })
+            }
+            _ => Unknown(desc),
+        }
+    }
 }
 
 pub trait CMFormatDescriptionInterface: CFTypeInterface {
@@ -102,30 +132,23 @@ pub trait CMFormatDescriptionInterface: CFTypeInterface {
 }
 
 #[repr(transparent)]
-#[derive(Clone)]
+#[derive(Clone, CFType)]
 pub struct CMFormatDescription {
     ptr: OwnedCFTypeRef,
 }
 
-impl AsRawObjCPtr for CMFormatDescription {
-    fn as_raw(&self) -> RawObjCPtr {
-        self.ptr.as_raw().into()
-    }
-}
-
-impl TypedOwnedObjCPtr for CMFormatDescription {
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self {
-        Self { ptr: ptr.into() }
-    }
-}
-
-impl CFTypeInterface for CMFormatDescription {
-    fn as_raw(&self) -> RawCFTypeRef {
-        self.ptr.as_raw()
-    }
-}
-
 impl CMFormatDescriptionInterface for CMFormatDescription {}
+
+pub trait CMAudioFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMAudioFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMAudioFormatDescription {}
+impl CMAudioFormatDescriptionInterface for CMAudioFormatDescription {}
 
 #[derive(Copy, Clone, Default, Eq, PartialEq)]
 #[repr(C)]
@@ -145,3 +168,67 @@ pub trait CMVideoFormatDescriptionInterface: CMFormatDescriptionInterface {
         unsafe { CMVideoFormatDescriptionGetDimensions(self_raw) }
     }
 }
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMVideoFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMVideoFormatDescription {}
+impl CMVideoFormatDescriptionInterface for CMVideoFormatDescription {}
+
+pub trait CMMuxedFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMMuxedFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMMuxedFormatDescription {}
+impl CMMuxedFormatDescriptionInterface for CMMuxedFormatDescription {}
+
+pub trait CMMetadataFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMMetadataFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMMetadataFormatDescription {}
+impl CMMetadataFormatDescriptionInterface for CMMetadataFormatDescription {}
+
+pub trait CMTextFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMTextFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMTextFormatDescription {}
+impl CMTextFormatDescriptionInterface for CMTextFormatDescription {}
+
+pub trait CMTimeCodeFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMTimeCodeFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMTimeCodeFormatDescription {}
+impl CMTimeCodeFormatDescriptionInterface for CMTimeCodeFormatDescription {}
+
+pub trait CMClosedCaptionFormatDescriptionInterface: CMFormatDescriptionInterface {}
+
+#[repr(transparent)]
+#[derive(Clone, CFType)]
+pub struct CMClosedCaptionFormatDescription {
+    ptr: OwnedCFTypeRef,
+}
+
+impl CMFormatDescriptionInterface for CMClosedCaptionFormatDescription {}
+impl CMClosedCaptionFormatDescriptionInterface for CMClosedCaptionFormatDescription {}
