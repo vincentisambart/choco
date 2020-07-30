@@ -218,6 +218,96 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
     }
 }
 
+#[proc_macro_derive(CFType)]
+pub fn cftype_derive_wrapper(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    cftype_derive(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+fn cftype_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
+    // CFType objects should not be directly passed to C (to keep a correct refcount),
+    // so technically #[repr(transparent)] doesn't bring much,
+    // but at least it requires the struct to have only one non-empty field.
+    if let Some(repr) = input.attrs.iter().find(|attr| attr.path.is_ident("repr")) {
+        let meta = repr.parse_meta()?;
+        if !is_repr_transparent(&meta) {
+            return Err(syn::Error::new_spanned(
+                repr,
+                "#[repr(transparent)] required",
+            ));
+        }
+    } else {
+        return Err(syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "#[repr(transparent)] required",
+        ));
+    }
+
+    let data = match &input.data {
+        syn::Data::Struct(struct_data) => struct_data,
+        _ => {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "only structs are supported",
+            ))
+        }
+    };
+
+    let struct_name = input.ident;
+
+    let main_field = match data.fields.iter().next() {
+        Some(first_field) => match &first_field.ident {
+            Some(ident) => proc_macro2::TokenTree::Ident(ident.clone()),
+            None => proc_macro2::TokenTree::Literal(proc_macro2::Literal::u8_unsuffixed(0)),
+        },
+        None => {
+            return Err(syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "the struct should have at least one field",
+            ))
+        }
+    };
+
+    let other_fields_init: Vec<proc_macro2::TokenStream> = data
+        .fields
+        .iter()
+        .skip(1)
+        .map(|field| {
+            let name = field.ident.as_ref().unwrap();
+            quote! {
+                #name: std::marker::PhantomData
+            }
+        })
+        .collect();
+
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    Ok(quote! {
+        impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+            fn as_raw(&self) -> RawObjCPtr {
+                self.#main_field.as_raw().into()
+            }
+        }
+
+        impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
+            unsafe fn from_owned_unchecked(#main_field: OwnedObjCPtr) -> Self {
+                Self {
+                    #main_field: #main_field.into(),
+                    #(#other_fields_init),*
+                }
+            }
+        }
+
+        impl #impl_generics crate::base::CFTypeInterface for #struct_name #ty_generics #where_clause {
+            fn as_raw(&self) -> RawCFTypeRef {
+                self.#main_field.as_raw()
+            }
+        }
+    })
+}
+
 fn fourcc_impl(str_lit: &syn::LitStr) -> syn::Result<proc_macro2::TokenStream> {
     let text = str_lit.value();
     let span = str_lit.span();
