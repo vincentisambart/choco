@@ -43,12 +43,13 @@ impl std::ops::BitAnd for CMTimeFlags {
     }
 }
 
+#[derive(Copy, Clone)]
 #[repr(C)]
 pub struct CMTime {
-    value: CMTimeValue,
-    timescale: CMTimeScale,
-    flags: CMTimeFlags,
-    epoch: CMTimeEpoch,
+    pub value: CMTimeValue,
+    pub timescale: CMTimeScale,
+    pub flags: CMTimeFlags,
+    pub epoch: CMTimeEpoch,
 }
 
 #[cfg(test)]
@@ -59,6 +60,13 @@ mod cmtime_tests {
     fn size() {
         assert_eq!(std::mem::size_of::<CMTime>(), 24);
     }
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct CMTimeRange {
+    pub start: CMTime,
+    pub duration: CMTime,
 }
 
 //-------------------------------------------------------------------

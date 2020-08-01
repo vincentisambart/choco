@@ -76,3 +76,14 @@ impl CGRect {
         self.size.height.abs()
     }
 }
+
+#[derive(Copy, Clone, Default, PartialEq)]
+#[repr(C)]
+pub struct CGAffineTransform {
+    a: CGFloat,
+    b: CGFloat,
+    c: CGFloat,
+    d: CGFloat,
+    tx: CGFloat,
+    ty: CGFloat,
+}
