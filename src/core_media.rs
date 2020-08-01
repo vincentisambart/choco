@@ -134,7 +134,7 @@ pub trait CMFormatDescriptionInterface: CFTypeInterface {
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMFormatDescription {}
@@ -144,7 +144,7 @@ pub trait CMAudioFormatDescriptionInterface: CMFormatDescriptionInterface {}
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMAudioFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMAudioFormatDescription {}
@@ -172,7 +172,7 @@ pub trait CMVideoFormatDescriptionInterface: CMFormatDescriptionInterface {
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMVideoFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMVideoFormatDescription {}
@@ -183,7 +183,7 @@ pub trait CMMuxedFormatDescriptionInterface: CMFormatDescriptionInterface {}
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMMuxedFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMMuxedFormatDescription {}
@@ -194,7 +194,7 @@ pub trait CMMetadataFormatDescriptionInterface: CMFormatDescriptionInterface {}
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMMetadataFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMMetadataFormatDescription {}
@@ -205,7 +205,7 @@ pub trait CMTextFormatDescriptionInterface: CMFormatDescriptionInterface {}
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMTextFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMTextFormatDescription {}
@@ -216,7 +216,7 @@ pub trait CMTimeCodeFormatDescriptionInterface: CMFormatDescriptionInterface {}
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMTimeCodeFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMTimeCodeFormatDescription {}
@@ -227,7 +227,7 @@ pub trait CMClosedCaptionFormatDescriptionInterface: CMFormatDescriptionInterfac
 #[repr(transparent)]
 #[derive(Clone, CFType)]
 pub struct CMClosedCaptionFormatDescription {
-    ptr: OwnedCFTypeRef,
+    ptr: CFTypeRef,
 }
 
 impl CMFormatDescriptionInterface for CMClosedCaptionFormatDescription {}

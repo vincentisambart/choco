@@ -69,11 +69,11 @@ impl From<RawCFTypeRef> for RawNullableCFTypeRef {
 }
 
 #[repr(transparent)]
-pub struct OwnedCFTypeRef {
+pub struct CFTypeRef {
     pub(super) raw: RawCFTypeRef,
 }
 
-impl OwnedCFTypeRef {
+impl CFTypeRef {
     /// # Safety
     /// You must be sure that you own the pointer.
     /// The pointer will be released when we go out of scope.
@@ -86,7 +86,7 @@ impl OwnedCFTypeRef {
     }
 }
 
-impl Drop for OwnedCFTypeRef {
+impl Drop for CFTypeRef {
     fn drop(&mut self) {
         unsafe {
             CFRelease(self.as_raw());
@@ -94,7 +94,7 @@ impl Drop for OwnedCFTypeRef {
     }
 }
 
-impl Clone for OwnedCFTypeRef {
+impl Clone for CFTypeRef {
     fn clone(&self) -> Self {
         let raw = unsafe { CFRetain(self.as_raw()) }
             .into_opt()
@@ -107,7 +107,7 @@ pub trait CFTypeInterface
 where
     // to be able to have default implementations of methods returning Self
     Self: Sized,
-    // all objects should be clonable (here cloning just means increasing the refcount)
+    // all objects should be clonable (here cloning just means increasing the reference count)
     Self: Clone,
 {
     fn as_raw(&self) -> RawCFTypeRef;

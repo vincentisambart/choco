@@ -64,7 +64,8 @@ extern "C" {
     fn class_getName(class: ObjCClassPtr) -> *const i8;
 }
 
-// I would like to use Option<ObjCClassPtr> instead but I'm not sure its memory layout is the same.
+// I would like to use Option<ObjCClassPtr> instead but I'm not sure
+// if its memory layout is guaranted to be the same.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct NullableObjCClassPtr {
@@ -100,7 +101,8 @@ impl ObjCClassPtr {
     }
 }
 
-// I would like to use Option<RawObjCPtr> instead but I'm not sure its memory layout is the same.
+// I would like to use Option<RawObjCPtr> instead but I'm not sure
+// if its memory layout is guaranted to be the same.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct NullableRawObjCPtr {
@@ -117,6 +119,7 @@ impl NullableRawObjCPtr {
     }
 }
 
+/// Raw Objective-C pointer without any reference counting.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct RawObjCPtr {
@@ -145,12 +148,13 @@ impl From<RawObjCPtr> for super::core_foundation::RawCFTypeRef {
     }
 }
 
+/// Owned reference-counted Objective-C pointer.
 #[repr(transparent)]
-pub struct OwnedObjCPtr {
+pub struct ObjCPtr {
     raw: RawObjCPtr,
 }
 
-impl OwnedObjCPtr {
+impl ObjCPtr {
     /// # Safety
     /// You must be sure that you own the pointer.
     /// The pointer will be released when we go out of scope.
@@ -163,7 +167,7 @@ impl OwnedObjCPtr {
     }
 }
 
-impl Drop for OwnedObjCPtr {
+impl Drop for ObjCPtr {
     fn drop(&mut self) {
         unsafe {
             objc_release(self.as_raw());
@@ -171,7 +175,7 @@ impl Drop for OwnedObjCPtr {
     }
 }
 
-impl Clone for OwnedObjCPtr {
+impl Clone for ObjCPtr {
     fn clone(&self) -> Self {
         let raw = unsafe { objc_retain(self.as_raw()) }
             .into_opt()
@@ -180,31 +184,34 @@ impl Clone for OwnedObjCPtr {
     }
 }
 
-impl From<super::core_foundation::OwnedCFTypeRef> for OwnedObjCPtr {
-    fn from(owned: super::core_foundation::OwnedCFTypeRef) -> Self {
+impl From<super::core_foundation::CFTypeRef> for ObjCPtr {
+    fn from(owned: super::core_foundation::CFTypeRef) -> Self {
         let raw = owned.raw.into();
         std::mem::forget(owned);
         Self { raw }
     }
 }
 
-impl From<OwnedObjCPtr> for super::core_foundation::OwnedCFTypeRef {
-    fn from(owned: OwnedObjCPtr) -> Self {
+impl From<ObjCPtr> for super::core_foundation::CFTypeRef {
+    fn from(owned: ObjCPtr) -> Self {
         let raw = owned.raw.into();
         std::mem::forget(owned);
         Self { raw }
     }
 }
 
+/// Types that implement AsRawObjCPtr but are not LikeObjCPtr are non reference counted types like StaticString.
 pub trait AsRawObjCPtr {
     fn as_raw(&self) -> RawObjCPtr;
 }
 
-pub trait TypedOwnedObjCPtr
+/// Behavior expected from an owned reference counted Objective-C pointer.
+/// That is implemented by Objective-C types, but also Core Foundation ones.
+pub trait LikeObjCPtr
 where
     // to be able to have default implementations of methods returning Self
     Self: Sized,
-    // all objects should be clonable (here cloning just means increasing the refcount)
+    // all objects should be clonable (here cloning just means increasing the reference count)
     Self: Clone,
     Self: AsRawObjCPtr,
 {
@@ -214,7 +221,7 @@ where
     /// You must be sure that Objective-C pointer is of the correct type, and that you own it.
     /// The pointer will be released this struct goes out of scope.
     unsafe fn from_owned_raw_unchecked(raw: RawObjCPtr) -> Self {
-        Self::from_owned_unchecked(OwnedObjCPtr::from_raw_unchecked(raw))
+        Self::from_owned_unchecked(ObjCPtr::from_raw_unchecked(raw))
     }
 
     /// Create a new struct owning its Objective-C pointer, from a non-owning pointer, without doing any check.
@@ -232,7 +239,7 @@ where
     ///
     /// # Safety
     /// You must be sure that Objective-C pointer is of the correct type.
-    unsafe fn from_owned_unchecked(ptr: OwnedObjCPtr) -> Self;
+    unsafe fn from_owned_unchecked(ptr: ObjCPtr) -> Self;
 }
 
 pub trait NSObjectProtocol
@@ -245,7 +252,7 @@ where
 {
     /// Owned (retained) version of the type. Most of the time it will be Self.
     /// Unowned versions are not ref counted, generally for statics.
-    type Owned: NSObjectProtocol + TypedOwnedObjCPtr;
+    type Owned: NSObjectProtocol + LikeObjCPtr;
 
     /// Objective-C class this struct represents.
     fn class() -> ObjCClassPtr;
@@ -301,7 +308,7 @@ pub trait NSObjectInterface: NSObjectProtocol {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(base)]
 pub struct NSObject {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSObject {}
@@ -328,8 +335,8 @@ mod tests {
 }
 
 /// Marker trait used for handling of type parameters in NSArray and NSDictionary.
-pub trait IsKindOf<T: TypedOwnedObjCPtr>: AsRawObjCPtr {}
-impl<T: TypedOwnedObjCPtr> IsKindOf<T> for T {}
+pub trait IsKindOf<T: LikeObjCPtr>: AsRawObjCPtr {}
+impl<T: LikeObjCPtr> IsKindOf<T> for T {}
 
 struct AutoreleasePoolGuard {
     pool: NonNull<OpaqueAutoreleasePool>,

@@ -123,7 +123,7 @@ pub trait NSStringInterface: NSObjectInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSString {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSString {
@@ -212,7 +212,7 @@ mod string_tests {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation, objc_class = NSString)]
 pub struct ImmutableNSString {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for ImmutableNSString {}
@@ -339,7 +339,7 @@ pub trait NSMutableStringInterface: NSObjectInterface {}
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSMutableString {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSMutableString {}

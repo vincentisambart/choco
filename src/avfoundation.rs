@@ -60,7 +60,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
         keys: Keys,
         handler: CompletionHandler,
     ) where
-        Key: NSStringInterface + TypedOwnedObjCPtr,
+        Key: NSStringInterface + LikeObjCPtr,
         Keys: NSArrayInterface<Key>,
         CompletionHandler: Fn() + Send + 'static,
     {
@@ -110,7 +110,7 @@ where
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAsset {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAsset {}
@@ -146,8 +146,8 @@ pub trait AVURLAssetInterface: AVAssetInterface {
         options: &Options,
     ) -> Self::Owned
     where
-        K: NSStringInterface + TypedOwnedObjCPtr,
-        V: NSObjectProtocol + TypedOwnedObjCPtr,
+        K: NSStringInterface + LikeObjCPtr,
+        V: NSObjectProtocol + LikeObjCPtr,
         Options: NSDictionaryInterface<K, V>,
     {
         let raw_ptr = unsafe {
@@ -168,7 +168,7 @@ pub trait AVURLAssetInterface: AVAssetInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVURLAsset {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl AVURLAsset {
@@ -350,7 +350,7 @@ where
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAssetTrack {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAssetTrack {}
@@ -395,7 +395,7 @@ pub trait AVAssetReaderInterface: NSObjectInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAssetReader {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAssetReader {}
@@ -422,7 +422,7 @@ pub trait AVAssetReaderTrackOutputInterface: NSObjectInterface {}
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAssetReaderTrackOutput {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAssetReaderTrackOutput {}
@@ -449,7 +449,7 @@ pub trait AVAssetReaderOutputInterface: NSObjectInterface {}
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAssetReaderOutput {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAssetReaderOutput {}
@@ -476,7 +476,7 @@ pub trait AVAssetReaderSampleReferenceOutputInterface: AVAssetReaderOutputInterf
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = AVFoundation)]
 pub struct AVAssetReaderSampleReferenceOutput {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for AVAssetReaderSampleReferenceOutput {}

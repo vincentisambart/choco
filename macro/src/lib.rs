@@ -196,8 +196,8 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
                 }
             }
 
-            impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
-                unsafe fn from_owned_unchecked(#main_field: crate::base::OwnedObjCPtr) -> Self {
+            impl #impl_generics crate::base::LikeObjCPtr for #struct_name #ty_generics #where_clause {
+                unsafe fn from_owned_unchecked(#main_field: crate::base::ObjCPtr) -> Self {
                     Self {
                         #main_field,
                         #(#other_fields_init),*
@@ -291,8 +291,8 @@ fn cftype_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, syn::Er
             }
         }
 
-        impl #impl_generics crate::base::TypedOwnedObjCPtr for #struct_name #ty_generics #where_clause {
-            unsafe fn from_owned_unchecked(#main_field: crate::base::OwnedObjCPtr) -> Self {
+        impl #impl_generics crate::base::LikeObjCPtr for #struct_name #ty_generics #where_clause {
+            unsafe fn from_owned_unchecked(#main_field: crate::base::ObjCPtr) -> Self {
                 Self {
                     #main_field: #main_field.into(),
                     #(#other_fields_init),*

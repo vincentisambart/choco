@@ -13,9 +13,7 @@ extern "C" {
     ) -> NullableRawObjCPtr;
 }
 
-pub trait NSDictionaryInterface<K: TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>:
-    NSObjectInterface
-{
+pub trait NSDictionaryInterface<K: LikeObjCPtr, V: LikeObjCPtr>: NSObjectInterface {
     fn count(&self) -> usize {
         let raw_self = self.as_raw();
         unsafe { choco_Foundation_NSDictionaryInterface_instance_count(raw_self) }
@@ -45,40 +43,33 @@ pub trait NSDictionaryInterface<K: TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>:
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
-pub struct NSDictionary<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> {
-    ptr: OwnedObjCPtr,
+pub struct NSDictionary<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> {
+    ptr: ObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInterface
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSObjectInterface for NSDictionary<K, V> {}
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSDictionaryInterface<K, V>
     for NSDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
-    for NSDictionary<K, V>
-{
-}
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSFastEnumeration<K>
     for NSDictionary<K, V>
 {
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSDictionary<K, V>>
-    for NSObject
-{
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> From<NSDictionary<K, V>> for NSObject {
     fn from(obj: NSDictionary<K, V>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSCopyingProtocol
-    for NSDictionary<K, V>
-{
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSCopyingProtocol for NSDictionary<K, V> {
     type Immutable = ImmutableNSDictionary<K, V>;
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSMutableCopyingProtocol
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSMutableCopyingProtocol
     for NSDictionary<K, V>
 {
     type Mutable = NSMutableDictionary<K, V>;
@@ -90,27 +81,27 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSMutableCop
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation, objc_class = NSDictionary)]
-pub struct ImmutableNSDictionary<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> {
-    ptr: OwnedObjCPtr,
+pub struct ImmutableNSDictionary<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> {
+    ptr: ObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInterface
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSObjectInterface
     for ImmutableNSDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSDictionaryInterface<K, V>
     for ImmutableNSDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSFastEnumeration<K>
     for ImmutableNSDictionary<K, V>
 {
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
-    From<ImmutableNSDictionary<K, V>> for NSObject
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> From<ImmutableNSDictionary<K, V>>
+    for NSObject
 {
     fn from(obj: ImmutableNSDictionary<K, V>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
@@ -118,26 +109,26 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
 }
 
 // A NSDictionary known to be immutable can be used as a normal NSDictionary.
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
-    From<ImmutableNSDictionary<K, V>> for NSDictionary<K, V>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> From<ImmutableNSDictionary<K, V>>
+    for NSDictionary<K, V>
 {
     fn from(obj: ImmutableNSDictionary<K, V>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSMutableCopyingProtocol
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSMutableCopyingProtocol
     for ImmutableNSDictionary<K, V>
 {
     type Mutable = NSMutableDictionary<K, V>;
 }
 
 // An ImmutableNSString is known to be immutable so can be shared between threads.
-unsafe impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> Send
+unsafe impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> Send
     for ImmutableNSDictionary<K, V>
 {
 }
-unsafe impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> Sync
+unsafe impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> Sync
     for ImmutableNSDictionary<K, V>
 {
 }
@@ -159,10 +150,8 @@ extern "C" {
     fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(self_: RawObjCPtr);
 }
 
-pub trait NSMutableDictionaryInterface<
-    K: NSObjectProtocol + TypedOwnedObjCPtr,
-    V: TypedOwnedObjCPtr,
->: NSDictionaryInterface<K, V>
+pub trait NSMutableDictionaryInterface<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr>:
+    NSDictionaryInterface<K, V>
 {
     fn set<Key, Value>(&self, key: &Key, value: &Value)
     where
@@ -201,30 +190,30 @@ pub trait NSMutableDictionaryInterface<
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
-pub struct NSMutableDictionary<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> {
-    ptr: OwnedObjCPtr,
+pub struct NSMutableDictionary<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> {
+    ptr: ObjCPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSObjectInterface
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSObjectInterface
     for NSMutableDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSDictionaryInterface<K, V>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSDictionaryInterface<K, V>
     for NSMutableDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr>
-    NSMutableDictionaryInterface<K, V> for NSMutableDictionary<K, V>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSMutableDictionaryInterface<K, V>
+    for NSMutableDictionary<K, V>
 {
 }
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSFastEnumeration<K>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSFastEnumeration<K>
     for NSMutableDictionary<K, V>
 {
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSMutableDictionary<K, V>>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> From<NSMutableDictionary<K, V>>
     for NSObject
 {
     fn from(obj: NSMutableDictionary<K, V>) -> Self {
@@ -232,13 +221,13 @@ impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSMutab
     }
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> NSCopyingProtocol
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> NSCopyingProtocol
     for NSMutableDictionary<K, V>
 {
     type Immutable = ImmutableNSDictionary<K, V>;
 }
 
-impl<K: NSObjectProtocol + TypedOwnedObjCPtr, V: TypedOwnedObjCPtr> From<NSMutableDictionary<K, V>>
+impl<K: NSObjectProtocol + LikeObjCPtr, V: LikeObjCPtr> From<NSMutableDictionary<K, V>>
     for NSDictionary<K, V>
 {
     fn from(obj: NSMutableDictionary<K, V>) -> Self {

@@ -20,7 +20,7 @@ extern "C" {
 }
 
 pub trait NSCopyingProtocol: NSObjectInterface {
-    type Immutable: NSObjectProtocol + TypedOwnedObjCPtr;
+    type Immutable: NSObjectProtocol + LikeObjCPtr;
 
     fn copy(&self) -> Self::Immutable {
         let raw_self = self.as_raw();
@@ -33,7 +33,7 @@ pub trait NSCopyingProtocol: NSObjectInterface {
 }
 
 pub trait NSMutableCopyingProtocol: NSObjectInterface {
-    type Mutable: NSObjectProtocol + TypedOwnedObjCPtr;
+    type Mutable: NSObjectProtocol + LikeObjCPtr;
 
     fn mutable_copy(&self) -> Self::Mutable {
         let raw_self = self.as_raw();
@@ -84,7 +84,7 @@ impl NSFastEnumerationState {
 const FAST_ENUMERATOR_BUFFER_LEN: usize = 16;
 pub struct NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: TypedOwnedObjCPtr,
+    Item: LikeObjCPtr,
 {
     enumerable: RawObjCPtr,
     /// state.items will not always point to this buffer, it can be using storage local to the enumerable.
@@ -100,7 +100,7 @@ where
 
 impl<'enumerable, Item> NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: TypedOwnedObjCPtr,
+    Item: LikeObjCPtr,
 {
     fn new<Enumerable>(enumerable: &'enumerable Enumerable) -> Self
     where
@@ -120,7 +120,7 @@ where
 
 impl<'enumerable, Item> Iterator for NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: TypedOwnedObjCPtr,
+    Item: LikeObjCPtr,
 {
     type Item = Item;
 
@@ -163,7 +163,7 @@ where
 
 pub trait NSFastEnumeration<Item>: NSObjectInterface
 where
-    Item: TypedOwnedObjCPtr,
+    Item: LikeObjCPtr,
 {
     fn iter(&'_ self) -> NSFastEnumerationIter<'_, Item> {
         NSFastEnumerationIter::new(self)
@@ -280,7 +280,7 @@ pub trait NSURLInterface: NSObjectInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSURL {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSURL {}
@@ -388,7 +388,7 @@ pub trait NSDateInterface: NSObjectInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSDate {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSDate {}
@@ -488,7 +488,7 @@ pub trait NSNumberInterface: NSObjectInterface {
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSNumber {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSNumber {}
@@ -551,7 +551,7 @@ pub trait NSErrorInterface: NSObjectInterface {}
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
 pub struct NSError {
-    ptr: OwnedObjCPtr,
+    ptr: ObjCPtr,
 }
 
 impl NSObjectInterface for NSError {}
