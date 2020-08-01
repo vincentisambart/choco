@@ -162,6 +162,12 @@ impl std::cmp::PartialEq<NSString> for StaticNSString {
     }
 }
 
+impl std::cmp::PartialEq<NSString> for NSMutableString {
+    fn eq(&self, other: &NSString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
 impl NSCopyingProtocol for NSString {
     type Immutable = ImmutableNSString;
 }
@@ -239,8 +245,13 @@ impl std::cmp::PartialEq<ImmutableNSString> for NSString {
     }
 }
 
-// A NSString known to be immutable can be used as a normal NSString.
 impl std::cmp::PartialEq<ImmutableNSString> for StaticNSString {
+    fn eq(&self, other: &ImmutableNSString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
+impl std::cmp::PartialEq<ImmutableNSString> for NSMutableString {
     fn eq(&self, other: &ImmutableNSString) -> bool {
         self.is_equal_to_string(other)
     }
@@ -298,6 +309,12 @@ impl std::cmp::PartialEq<StaticNSString> for ImmutableNSString {
     }
 }
 
+impl std::cmp::PartialEq<StaticNSString> for NSMutableString {
+    fn eq(&self, other: &StaticNSString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
 impl NSMutableCopyingProtocol for StaticNSString {
     type Mutable = NSMutableString;
 }
@@ -336,6 +353,30 @@ impl From<NSMutableString> for NSObject {
 }
 impl IsKindOf<NSObject> for NSMutableString {}
 impl IsKindOf<NSString> for NSMutableString {}
+
+impl std::cmp::PartialEq for NSMutableString {
+    fn eq(&self, other: &NSMutableString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
+impl std::cmp::PartialEq<NSMutableString> for NSString {
+    fn eq(&self, other: &NSMutableString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
+impl std::cmp::PartialEq<NSMutableString> for StaticNSString {
+    fn eq(&self, other: &NSMutableString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
+
+impl std::cmp::PartialEq<NSMutableString> for ImmutableNSString {
+    fn eq(&self, other: &NSMutableString) -> bool {
+        self.is_equal_to_string(other)
+    }
+}
 
 impl NSCopyingProtocol for NSMutableString {
     type Immutable = ImmutableNSString;
