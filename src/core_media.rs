@@ -138,8 +138,8 @@ pub struct CMFormatDescription {
 }
 
 impl CMFormatDescriptionInterface for CMFormatDescription {}
-
 pub trait CMAudioFormatDescriptionInterface: CMFormatDescriptionInterface {}
+impl ValidObjCGeneric for CMFormatDescription {}
 
 #[repr(transparent)]
 #[derive(Clone, CFType)]

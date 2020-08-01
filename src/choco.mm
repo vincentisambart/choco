@@ -305,6 +305,11 @@ NSTimeInterval choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(_
 }
 
 //-------------------------------------------------------------------
+// NSValue
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSValue)
+
+//-------------------------------------------------------------------
 // NSNumber
 
 CLASS_FUNCTION_DEFINITION(Foundation, NSNumber)

@@ -55,7 +55,10 @@ impl NSStringEncoding {
     pub const MACOS_ROMAN: Self = Self(30);
 }
 
-pub trait NSStringInterface: NSObjectInterface {
+pub trait NSStringInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol + NSMutableCopyingProtocol,
+{
     fn to_string(&self) -> Result<String, std::str::Utf8Error> {
         let raw_self = self.as_raw();
         let cstr = unsafe {
@@ -136,6 +139,7 @@ impl NSString {
 
 impl NSObjectInterface for NSString {}
 impl NSStringInterface for NSString {}
+impl ValidObjCGeneric for NSString {}
 
 impl From<NSString> for NSObject {
     fn from(obj: NSString) -> Self {
@@ -217,6 +221,9 @@ pub struct ImmutableNSString {
 
 impl NSObjectInterface for ImmutableNSString {}
 impl NSStringInterface for ImmutableNSString {}
+impl NSCopyingProtocol for ImmutableNSString {
+    type Immutable = Self;
+}
 
 impl From<ImmutableNSString> for NSObject {
     fn from(obj: ImmutableNSString) -> Self {
@@ -287,6 +294,9 @@ impl StaticNSString {
 
 impl NSObjectInterface for StaticNSString {}
 impl NSStringInterface for StaticNSString {}
+impl NSCopyingProtocol for StaticNSString {
+    type Immutable = ImmutableNSString;
+}
 
 impl IsKindOf<NSObject> for StaticNSString {}
 impl IsKindOf<NSString> for StaticNSString {}
@@ -345,6 +355,7 @@ pub struct NSMutableString {
 impl NSObjectInterface for NSMutableString {}
 impl NSStringInterface for NSMutableString {}
 impl NSMutableStringInterface for NSMutableString {}
+impl ValidObjCGeneric for NSMutableString {}
 
 impl From<NSMutableString> for NSObject {
     fn from(obj: NSMutableString) -> Self {

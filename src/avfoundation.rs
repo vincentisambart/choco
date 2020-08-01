@@ -60,7 +60,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
         keys: Keys,
         handler: CompletionHandler,
     ) where
-        Key: NSStringInterface + LikeObjCPtr,
+        Key: NSStringInterface + ValidObjCGeneric,
         Keys: NSArrayInterface<Key>,
         CompletionHandler: Fn() + Send + 'static,
     {
@@ -88,7 +88,7 @@ extern "C" {
 
 pub trait AVAssetInterface: NSObjectInterface
 where
-    Self: AVAsynchronousKeyValueLoadingProtocol,
+    Self: NSCopyingProtocol + AVAsynchronousKeyValueLoadingProtocol,
 {
     fn tracks(&self) -> NSArray<AVAssetTrack> {
         let self_raw = self.as_raw();
@@ -116,6 +116,10 @@ pub struct AVAsset {
 impl NSObjectInterface for AVAsset {}
 impl AVAsynchronousKeyValueLoadingProtocol for AVAsset {}
 impl AVAssetInterface for AVAsset {}
+impl NSCopyingProtocol for AVAsset {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for AVAsset {}
 
 impl From<AVAsset> for NSObject {
     fn from(obj: AVAsset) -> Self {
@@ -146,8 +150,8 @@ pub trait AVURLAssetInterface: AVAssetInterface {
         options: &Options,
     ) -> Self::Owned
     where
-        K: NSStringInterface + LikeObjCPtr,
-        V: NSObjectProtocol + LikeObjCPtr,
+        K: ValidObjCGeneric + NSStringInterface,
+        V: ValidObjCGeneric,
         Options: NSDictionaryInterface<K, V>,
     {
         let raw_ptr = unsafe {
@@ -181,6 +185,10 @@ impl NSObjectInterface for AVURLAsset {}
 impl AVAsynchronousKeyValueLoadingProtocol for AVURLAsset {}
 impl AVAssetInterface for AVURLAsset {}
 impl AVURLAssetInterface for AVURLAsset {}
+impl NSCopyingProtocol for AVURLAsset {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for AVURLAsset {}
 
 impl From<AVURLAsset> for NSObject {
     fn from(obj: AVURLAsset) -> Self {
@@ -322,7 +330,7 @@ extern "C" {
 
 pub trait AVAssetTrackInterface: NSObjectInterface
 where
-    Self: AVAsynchronousKeyValueLoadingProtocol,
+    Self: NSCopyingProtocol + AVAsynchronousKeyValueLoadingProtocol,
 {
     fn media_type(&self) -> AVMediaType {
         let raw_self = self.as_raw();
@@ -356,6 +364,10 @@ pub struct AVAssetTrack {
 impl NSObjectInterface for AVAssetTrack {}
 impl AVAsynchronousKeyValueLoadingProtocol for AVAssetTrack {}
 impl AVAssetTrackInterface for AVAssetTrack {}
+impl NSCopyingProtocol for AVAssetTrack {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for AVAssetTrack {}
 
 impl From<AVAssetTrack> for NSObject {
     fn from(obj: AVAssetTrack) -> Self {
@@ -400,6 +412,7 @@ pub struct AVAssetReader {
 
 impl NSObjectInterface for AVAssetReader {}
 impl AVAssetReaderInterface for AVAssetReader {}
+impl ValidObjCGeneric for AVAssetReader {}
 
 impl From<AVAssetReader> for NSObject {
     fn from(obj: AVAssetReader) -> Self {
@@ -427,6 +440,7 @@ pub struct AVAssetReaderTrackOutput {
 
 impl NSObjectInterface for AVAssetReaderTrackOutput {}
 impl AVAssetReaderTrackOutputInterface for AVAssetReaderTrackOutput {}
+impl ValidObjCGeneric for AVAssetReaderTrackOutput {}
 
 impl From<AVAssetReaderTrackOutput> for NSObject {
     fn from(obj: AVAssetReaderTrackOutput) -> Self {
@@ -454,6 +468,7 @@ pub struct AVAssetReaderOutput {
 
 impl NSObjectInterface for AVAssetReaderOutput {}
 impl AVAssetReaderOutputInterface for AVAssetReaderOutput {}
+impl ValidObjCGeneric for AVAssetReaderOutput {}
 
 impl From<AVAssetReaderOutput> for NSObject {
     fn from(obj: AVAssetReaderOutput) -> Self {
@@ -482,6 +497,7 @@ pub struct AVAssetReaderSampleReferenceOutput {
 impl NSObjectInterface for AVAssetReaderSampleReferenceOutput {}
 impl AVAssetReaderOutputInterface for AVAssetReaderSampleReferenceOutput {}
 impl AVAssetReaderSampleReferenceOutputInterface for AVAssetReaderSampleReferenceOutput {}
+impl ValidObjCGeneric for AVAssetReaderSampleReferenceOutput {}
 
 impl From<AVAssetReaderSampleReferenceOutput> for NSObject {
     fn from(obj: AVAssetReaderSampleReferenceOutput) -> Self {

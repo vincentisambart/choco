@@ -104,7 +104,7 @@ where
 {
     fn new<Enumerable>(enumerable: &'enumerable Enumerable) -> Self
     where
-        Enumerable: NSFastEnumeration<Item>,
+        Enumerable: NSFastEnumerationProtocol<Item>,
     {
         Self {
             enumerable: enumerable.as_raw(),
@@ -161,7 +161,7 @@ where
     }
 }
 
-pub trait NSFastEnumeration<Item>: NSObjectInterface
+pub trait NSFastEnumerationProtocol<Item>: NSObjectInterface
 where
     Item: LikeObjCPtr,
 {
@@ -226,7 +226,10 @@ extern "C" {
     ) -> NullableRawObjCPtr;
 }
 
-pub trait NSURLInterface: NSObjectInterface {
+pub trait NSURLInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol,
+{
     fn new_with_string(string: &impl NSStringInterface) -> Option<Self::Owned> {
         let raw_ptr = unsafe {
             choco_Foundation_NSURLInterface_class_newWithString(Self::class(), string.as_raw())
@@ -285,6 +288,10 @@ pub struct NSURL {
 
 impl NSObjectInterface for NSURL {}
 impl NSURLInterface for NSURL {}
+impl NSCopyingProtocol for NSURL {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for NSURL {}
 
 impl From<NSURL> for NSObject {
     fn from(obj: NSURL) -> Self {
@@ -354,7 +361,10 @@ extern "C" {
     ) -> NSTimeInterval;
 }
 
-pub trait NSDateInterface: NSObjectInterface {
+pub trait NSDateInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol,
+{
     fn since_now(&self) -> NSTimeInterval {
         let raw_self = self.as_raw();
         unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(raw_self) }
@@ -393,6 +403,10 @@ pub struct NSDate {
 
 impl NSObjectInterface for NSDate {}
 impl NSDateInterface for NSDate {}
+impl NSCopyingProtocol for NSDate {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for NSDate {}
 
 impl From<NSDate> for NSObject {
     fn from(obj: NSDate) -> Self {
@@ -412,6 +426,19 @@ impl std::ops::Sub for &NSDate {
 // A NSDate is immutable so can be shared between threads.
 unsafe impl Send for NSDate {}
 unsafe impl Sync for NSDate {}
+
+//-------------------------------------------------------------------
+// NSValue
+
+extern "C" {
+    fn choco_Foundation_NSValue_class() -> NullableObjCClassPtr;
+}
+
+pub trait NSValueInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol,
+{
+}
 
 //-------------------------------------------------------------------
 // NSNumber
@@ -437,7 +464,7 @@ extern "C" {
     ) -> NSUInteger;
 }
 
-pub trait NSNumberInterface: NSObjectInterface {
+pub trait NSNumberInterface: NSValueInterface {
     fn from_bool(value: bool) -> Self::Owned {
         let raw_ptr = unsafe {
             choco_Foundation_NSNumberInterface_class_newWithBool(Self::class(), value.into())
@@ -492,7 +519,12 @@ pub struct NSNumber {
 }
 
 impl NSObjectInterface for NSNumber {}
+impl NSValueInterface for NSNumber {}
 impl NSNumberInterface for NSNumber {}
+impl NSCopyingProtocol for NSNumber {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for NSNumber {}
 
 impl From<NSNumber> for NSObject {
     fn from(obj: NSNumber) -> Self {
@@ -545,7 +577,11 @@ extern "C" {
     fn choco_Foundation_NSError_class() -> NullableObjCClassPtr;
 }
 
-pub trait NSErrorInterface: NSObjectInterface {}
+pub trait NSErrorInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol,
+{
+}
 
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
@@ -556,6 +592,10 @@ pub struct NSError {
 
 impl NSObjectInterface for NSError {}
 impl NSErrorInterface for NSError {}
+impl NSCopyingProtocol for NSError {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for NSError {}
 
 impl From<NSError> for NSObject {
     fn from(obj: NSError) -> Self {

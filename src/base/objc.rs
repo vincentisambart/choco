@@ -242,6 +242,10 @@ where
     unsafe fn from_owned_unchecked(ptr: ObjCPtr) -> Self;
 }
 
+/// Indicates that the type can be used as type parameter for Objective-C classes like NSArray.
+/// That does not include special types like StaticNSString or ImmutableNSString.
+pub trait ValidObjCGeneric: LikeObjCPtr {}
+
 pub trait NSObjectProtocol
 where
     // to be able to have default implementations of methods returning Self
@@ -251,7 +255,7 @@ where
     Self: AsRawObjCPtr,
 {
     /// Owned (retained) version of the type. Most of the time it will be Self.
-    /// Unowned versions are not ref counted, generally for statics.
+    /// Unowned versions are not reference counted, generally for statics.
     type Owned: NSObjectProtocol + LikeObjCPtr;
 
     /// Objective-C class this struct represents.
@@ -312,6 +316,7 @@ pub struct NSObject {
 }
 
 impl NSObjectInterface for NSObject {}
+impl ValidObjCGeneric for NSObject {}
 
 #[cfg(test)]
 mod tests {

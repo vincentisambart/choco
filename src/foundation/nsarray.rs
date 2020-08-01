@@ -23,7 +23,10 @@ extern "C" {
     ) -> NullableRawObjCPtr;
 }
 
-pub trait NSArrayInterface<T: LikeObjCPtr>: NSObjectInterface {
+pub trait NSArrayInterface<T: ValidObjCGeneric>: NSObjectInterface
+where
+    Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<T>,
+{
     fn first(&self) -> Option<T> {
         let raw_self = self.as_raw();
         let raw_ptr = unsafe { choco_Foundation_NSArrayInterface_instance_firstObject(raw_self) };
@@ -81,28 +84,30 @@ pub trait NSArrayInterface<T: LikeObjCPtr>: NSObjectInterface {
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
-pub struct NSArray<T: LikeObjCPtr> {
+pub struct NSArray<T: ValidObjCGeneric> {
     ptr: ObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: LikeObjCPtr> NSObjectInterface for NSArray<T> {}
-impl<T: LikeObjCPtr> NSArrayInterface<T> for NSArray<T> {}
-impl<T: LikeObjCPtr> NSFastEnumeration<T> for NSArray<T> {}
+impl<T: ValidObjCGeneric> NSObjectInterface for NSArray<T> {}
+impl<T: ValidObjCGeneric> NSArrayInterface<T> for NSArray<T> {}
 
-impl<T: LikeObjCPtr> From<NSArray<T>> for NSObject {
+impl<T: ValidObjCGeneric> NSCopyingProtocol for NSArray<T> {
+    type Immutable = ImmutableNSArray<T>;
+}
+
+impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSArray<T> {
+    type Mutable = NSMutableArray<T>;
+}
+
+impl<T: ValidObjCGeneric> From<NSArray<T>> for NSObject {
     fn from(obj: NSArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<T: LikeObjCPtr> NSCopyingProtocol for NSArray<T> {
-    type Immutable = ImmutableNSArray<T>;
-}
-
-impl<T: LikeObjCPtr> NSMutableCopyingProtocol for NSArray<T> {
-    type Mutable = NSMutableArray<T>;
-}
+impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSArray<T> {}
+impl<T: ValidObjCGeneric> ValidObjCGeneric for NSArray<T> {}
 
 #[cfg(test)]
 mod array_tests {
@@ -146,35 +151,40 @@ mod array_tests {
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation, objc_class = NSArray)]
-pub struct ImmutableNSArray<T: LikeObjCPtr> {
+pub struct ImmutableNSArray<T: ValidObjCGeneric> {
     ptr: ObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: LikeObjCPtr> NSObjectInterface for ImmutableNSArray<T> {}
-impl<T: LikeObjCPtr> NSArrayInterface<T> for ImmutableNSArray<T> {}
-impl<T: LikeObjCPtr> NSFastEnumeration<T> for ImmutableNSArray<T> {}
+impl<T: ValidObjCGeneric> NSObjectInterface for ImmutableNSArray<T> {}
+impl<T: ValidObjCGeneric> NSArrayInterface<T> for ImmutableNSArray<T> {}
 
-impl<T: LikeObjCPtr> From<ImmutableNSArray<T>> for NSObject {
+impl<T: ValidObjCGeneric> NSCopyingProtocol for ImmutableNSArray<T> {
+    type Immutable = Self;
+}
+
+impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for ImmutableNSArray<T> {
+    type Mutable = NSMutableArray<T>;
+}
+
+impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for ImmutableNSArray<T> {}
+
+impl<T: ValidObjCGeneric> From<ImmutableNSArray<T>> for NSObject {
     fn from(obj: ImmutableNSArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
 // A NSArray known to be immutable can be used as a normal NSArray.
-impl<T: LikeObjCPtr> From<ImmutableNSArray<T>> for NSArray<T> {
+impl<T: ValidObjCGeneric> From<ImmutableNSArray<T>> for NSArray<T> {
     fn from(obj: ImmutableNSArray<T>) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
 
-impl<T: LikeObjCPtr> NSMutableCopyingProtocol for ImmutableNSArray<T> {
-    type Mutable = NSMutableArray<T>;
-}
-
 // An ImmutableNSArray is known to be immutable so can be shared between threads.
-unsafe impl<T: LikeObjCPtr> Send for ImmutableNSArray<T> {}
-unsafe impl<T: LikeObjCPtr> Sync for ImmutableNSArray<T> {}
+unsafe impl<T: ValidObjCGeneric> Send for ImmutableNSArray<T> {}
+unsafe impl<T: ValidObjCGeneric> Sync for ImmutableNSArray<T> {}
 
 //-------------------------------------------------------------------
 // NSMutableArray interface
@@ -187,7 +197,7 @@ extern "C" {
     );
 }
 
-pub trait NSMutableArrayInterface<T: LikeObjCPtr>: NSArrayInterface<T> {
+pub trait NSMutableArrayInterface<T: ValidObjCGeneric>: NSArrayInterface<T> {
     fn add_object<Value>(&self, value: &Value)
     where
         Value: IsKindOf<T>,
@@ -204,34 +214,36 @@ pub trait NSMutableArrayInterface<T: LikeObjCPtr>: NSArrayInterface<T> {
 #[repr(transparent)]
 #[derive(Clone, NSObjectProtocol)]
 #[choco(framework = Foundation)]
-pub struct NSMutableArray<T: LikeObjCPtr> {
+pub struct NSMutableArray<T: ValidObjCGeneric> {
     ptr: ObjCPtr,
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: LikeObjCPtr> NSObjectInterface for NSMutableArray<T> {}
-impl<T: LikeObjCPtr> NSArrayInterface<T> for NSMutableArray<T> {}
-impl<T: LikeObjCPtr> NSMutableArrayInterface<T> for NSMutableArray<T> {}
-impl<T: LikeObjCPtr> NSFastEnumeration<T> for NSMutableArray<T> {}
+impl<T: ValidObjCGeneric> NSObjectInterface for NSMutableArray<T> {}
+impl<T: ValidObjCGeneric> NSArrayInterface<T> for NSMutableArray<T> {}
+impl<T: ValidObjCGeneric> NSMutableArrayInterface<T> for NSMutableArray<T> {}
 
-impl<T: LikeObjCPtr> From<NSMutableArray<T>> for NSObject {
-    fn from(obj: NSMutableArray<T>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
-}
-
-impl<T: LikeObjCPtr> From<NSMutableArray<T>> for NSArray<T> {
-    fn from(obj: NSMutableArray<T>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
-}
-
-impl<T: LikeObjCPtr> NSCopyingProtocol for NSMutableArray<T> {
+impl<T: ValidObjCGeneric> NSCopyingProtocol for NSMutableArray<T> {
     type Immutable = ImmutableNSArray<T>;
 }
 
-impl<T: LikeObjCPtr> NSMutableCopyingProtocol for NSMutableArray<T> {
+impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSMutableArray<T> {
     type Mutable = NSMutableArray<T>;
+}
+
+impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSMutableArray<T> {}
+impl<T: ValidObjCGeneric> ValidObjCGeneric for NSMutableArray<T> {}
+
+impl<T: ValidObjCGeneric> From<NSMutableArray<T>> for NSObject {
+    fn from(obj: NSMutableArray<T>) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl<T: ValidObjCGeneric> From<NSMutableArray<T>> for NSArray<T> {
+    fn from(obj: NSMutableArray<T>) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
 }
 
 #[cfg(test)]
