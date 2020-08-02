@@ -1,8 +1,19 @@
-use crate::base::*;
-use crate::block::*;
+use crate::base::block::*;
+use crate::base::objc::*;
 use crate::core_media::*;
 use crate::foundation::*;
 use choco_macro::NSObjectProtocol;
+
+pub(crate) mod prelude {
+    pub use super::AVAssetInterface;
+    pub use super::AVAssetReaderInterface;
+    pub use super::AVAssetReaderOutputInterface;
+    pub use super::AVAssetReaderSampleReferenceOutputInterface;
+    pub use super::AVAssetReaderTrackOutputInterface;
+    pub use super::AVAssetTrackInterface;
+    pub use super::AVAsynchronousKeyValueLoadingProtocol;
+    pub use super::AVURLAssetInterface;
+}
 
 #[link(name = "AVFoundation", kind = "framework")]
 extern "C" {
@@ -34,7 +45,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
         self_: RawObjCPtr,
         keys: RawObjCPtr,
-        completion_handler: *mut crate::block::BlockHeader,
+        completion_handler: *mut crate::base::block::BlockHeader,
     );
 }
 

@@ -172,16 +172,16 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
 
     if is_owned_different {
         Ok(quote! {
-            impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
-                fn as_raw(&self) -> crate::base::RawObjCPtr {
+            impl #impl_generics crate::base::objc::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+                fn as_raw(&self) -> crate::base::objc::RawObjCPtr {
                     self.#main_field
                 }
             }
 
-            impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
+            impl #impl_generics crate::base::objc::NSObjectProtocol for #struct_name #ty_generics #where_clause {
                 type Owned = #owned;
 
-                fn class() -> crate::base::ObjCClassPtr {
+                fn class() -> crate::base::objc::ObjCClassPtr {
                     unsafe { #class_func() }
                         .into_opt()
                         .expect(#expect_message)
@@ -190,14 +190,14 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
         })
     } else {
         Ok(quote! {
-            impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
-                fn as_raw(&self) -> crate::base::RawObjCPtr {
+            impl #impl_generics crate::base::objc::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+                fn as_raw(&self) -> crate::base::objc::RawObjCPtr {
                     self.#main_field.as_raw()
                 }
             }
 
-            impl #impl_generics crate::base::LikeObjCPtr for #struct_name #ty_generics #where_clause {
-                unsafe fn from_owned_unchecked(#main_field: crate::base::ObjCPtr) -> Self {
+            impl #impl_generics crate::base::objc::LikeObjCPtr for #struct_name #ty_generics #where_clause {
+                unsafe fn from_owned_unchecked(#main_field: crate::base::objc::ObjCPtr) -> Self {
                     Self {
                         #main_field,
                         #(#other_fields_init),*
@@ -205,10 +205,10 @@ fn nsobjectprotocol_derive(input: DeriveInput) -> Result<proc_macro2::TokenStrea
                 }
             }
 
-            impl #impl_generics crate::base::NSObjectProtocol for #struct_name #ty_generics #where_clause {
+            impl #impl_generics crate::base::objc::NSObjectProtocol for #struct_name #ty_generics #where_clause {
                 type Owned = Self;
 
-                fn class() -> crate::base::ObjCClassPtr {
+                fn class() -> crate::base::objc::ObjCClassPtr {
                     unsafe { #class_func() }
                         .into_opt()
                         .expect(#expect_message)
@@ -285,14 +285,14 @@ fn cftype_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, syn::Er
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     Ok(quote! {
-        impl #impl_generics crate::base::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
-            fn as_raw(&self) -> crate::base::RawObjCPtr {
+        impl #impl_generics crate::base::objc::AsRawObjCPtr for #struct_name #ty_generics #where_clause {
+            fn as_raw(&self) -> crate::base::objc::RawObjCPtr {
                 self.#main_field.as_raw().into()
             }
         }
 
-        impl #impl_generics crate::base::LikeObjCPtr for #struct_name #ty_generics #where_clause {
-            unsafe fn from_owned_unchecked(#main_field: crate::base::ObjCPtr) -> Self {
+        impl #impl_generics crate::base::objc::LikeObjCPtr for #struct_name #ty_generics #where_clause {
+            unsafe fn from_owned_unchecked(#main_field: crate::base::objc::ObjCPtr) -> Self {
                 Self {
                     #main_field: #main_field.into(),
                     #(#other_fields_init),*
@@ -300,8 +300,8 @@ fn cftype_derive(input: DeriveInput) -> Result<proc_macro2::TokenStream, syn::Er
             }
         }
 
-        impl #impl_generics crate::base::CFTypeInterface for #struct_name #ty_generics #where_clause {
-            fn as_raw(&self) -> crate::base::RawCFTypeRef {
+        impl #impl_generics crate::base::core_foundation::CFTypeInterface for #struct_name #ty_generics #where_clause {
+            fn as_raw(&self) -> crate::base::core_foundation::RawCFTypeRef {
                 self.#main_field.as_raw()
             }
         }

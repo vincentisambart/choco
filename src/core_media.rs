@@ -1,6 +1,18 @@
-use crate::base::*;
+use crate::base::core_foundation::*;
+use crate::base::objc::*;
 use crate::core_graphics::CGRect;
 use choco_macro::{fourcc, CFType};
+
+pub(crate) mod prelude {
+    pub use super::CMAudioFormatDescriptionInterface;
+    pub use super::CMClosedCaptionFormatDescriptionInterface;
+    pub use super::CMFormatDescriptionInterface;
+    pub use super::CMMetadataFormatDescriptionInterface;
+    pub use super::CMMuxedFormatDescriptionInterface;
+    pub use super::CMTextFormatDescriptionInterface;
+    pub use super::CMTimeCodeFormatDescriptionInterface;
+    pub use super::CMVideoFormatDescriptionInterface;
+}
 
 //-------------------------------------------------------------------
 // CMTime

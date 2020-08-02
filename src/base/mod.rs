@@ -1,5 +1,5 @@
-mod core_foundation;
-mod objc;
+pub(crate) mod block;
+pub(crate) mod core_foundation;
+pub(crate) mod objc;
 
-pub use core_foundation::*;
-pub use objc::*;
+pub use objc::{autorelease_pool, NSObject};

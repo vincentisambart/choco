@@ -1,4 +1,4 @@
-use crate::base::*;
+use crate::base::objc::*;
 use choco_macro::NSObjectProtocol;
 
 mod nsarray;
@@ -7,6 +7,7 @@ mod nsstring;
 pub use nsarray::*;
 pub use nsdictionary::*;
 pub use nsstring::*;
+pub(crate) mod prelude;
 
 //-------------------------------------------------------------------
 // NSCopying/NSMutableCopying

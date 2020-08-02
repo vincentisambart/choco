@@ -1,0 +1,14 @@
+pub use super::NSArrayInterface;
+pub use super::NSCopyingProtocol;
+pub use super::NSDateInterface;
+pub use super::NSDictionaryInterface;
+pub use super::NSErrorInterface;
+pub use super::NSFastEnumerationProtocol;
+pub use super::NSMutableArrayInterface;
+pub use super::NSMutableCopyingProtocol;
+pub use super::NSMutableDictionaryInterface;
+pub use super::NSMutableStringInterface;
+pub use super::NSNumberInterface;
+pub use super::NSStringInterface;
+pub use super::NSURLInterface;
+pub use super::NSValueInterface;
