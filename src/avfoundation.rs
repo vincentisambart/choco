@@ -12,6 +12,9 @@ pub(crate) mod prelude {
     pub use super::AVAssetReaderTrackOutputInterface;
     pub use super::AVAssetTrackInterface;
     pub use super::AVAsynchronousKeyValueLoadingProtocol;
+    pub use super::AVAudioPlayerInterface;
+    pub use super::AVPlayerInterface;
+    pub use super::AVPlayerItemInterface;
     pub use super::AVURLAssetInterface;
 }
 
@@ -516,4 +519,257 @@ impl From<AVAssetReaderSampleReferenceOutput> for NSObject {
     }
 }
 
+impl From<AVAssetReaderSampleReferenceOutput> for AVAssetReaderOutput {
+    fn from(obj: AVAssetReaderSampleReferenceOutput) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
 impl IsKindOf<NSObject> for AVAssetReaderSampleReferenceOutput {}
+impl IsKindOf<AVAssetReaderOutput> for AVAssetReaderSampleReferenceOutput {}
+
+//-------------------------------------------------------------------
+// AVPlayerItem
+
+extern "C" {
+    fn choco_AVFoundation_AVPlayerItem_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVPlayerItemInterface_class_newWithURL(
+        class: ObjCClassPtr,
+        url: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVPlayerItemInterface_class_newWithAsset(
+        class: ObjCClassPtr,
+        asset: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVPlayerItemInterface_instance_error(
+        self_: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+}
+
+pub trait AVPlayerItemInterface: NSObjectInterface
+where
+    Self: NSCopyingProtocol,
+{
+    fn new_with_url(url: &impl NSURLInterface) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVPlayerItemInterface_class_newWithURL(Self::class(), url.as_raw())
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[[<class> alloc] initWithURL:] to return a non null pointer");
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
+    }
+
+    fn new_with_asset(asset: &impl AVAssetInterface) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVPlayerItemInterface_class_newWithAsset(
+                Self::class(),
+                asset.as_raw(),
+            )
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[[<class> alloc] initWithAsset:] to return a non null pointer");
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
+    }
+
+    fn error(&self) -> Option<NSError> {
+        let self_raw = self.as_raw();
+        let raw_ptr = unsafe { choco_AVFoundation_AVPlayerItemInterface_instance_error(self_raw) };
+        raw_ptr
+            .into_opt()
+            .map(|raw| unsafe { NSError::from_owned_raw_unchecked(raw) })
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = AVFoundation)]
+pub struct AVPlayerItem {
+    ptr: ObjCPtr,
+}
+
+impl NSObjectInterface for AVPlayerItem {}
+impl AVPlayerItemInterface for AVPlayerItem {}
+impl NSCopyingProtocol for AVPlayerItem {
+    type Immutable = Self;
+}
+impl ValidObjCGeneric for AVPlayerItem {}
+
+impl From<AVPlayerItem> for NSObject {
+    fn from(obj: AVPlayerItem) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVPlayerItem {}
+
+//-------------------------------------------------------------------
+// AVPlayer
+
+extern "C" {
+    fn choco_AVFoundation_AVPlayer_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVPlayerInterface_class_newWithURL(
+        class: ObjCClassPtr,
+        url: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVPlayerInterface_class_newWithPlayerItem(
+        class: ObjCClassPtr,
+        item: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVPlayerInterface_instance_play(self_: RawObjCPtr);
+    fn choco_AVFoundation_AVPlayerInterface_instance_pause(self_: RawObjCPtr);
+    fn choco_AVFoundation_AVPlayerInterface_instance_rate(self_: RawObjCPtr) -> f32;
+    fn choco_AVFoundation_AVPlayerInterface_instance_currentItem(
+        self_: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVPlayerInterface_instance_error(self_: RawObjCPtr)
+        -> NullableRawObjCPtr;
+}
+
+pub trait AVPlayerInterface: NSObjectInterface {
+    fn new_with_url(url: &impl NSURLInterface) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVPlayerInterface_class_newWithURL(Self::class(), url.as_raw())
+        };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[[<class> alloc] initWithURL:] to return a non null pointer");
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
+    }
+
+    fn new_with_player_item(url: &impl AVPlayerItemInterface) -> Self::Owned {
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVPlayerInterface_class_newWithPlayerItem(
+                Self::class(),
+                url.as_raw(),
+            )
+        };
+        let raw = raw_ptr.into_opt().expect(
+            "expecting -[[<class> alloc] initWithPlayerItem:] to return a non null pointer",
+        );
+        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
+    }
+
+    fn error(&self) -> Option<NSError> {
+        let self_raw = self.as_raw();
+        let raw_ptr = unsafe { choco_AVFoundation_AVPlayerInterface_instance_error(self_raw) };
+        raw_ptr
+            .into_opt()
+            .map(|raw| unsafe { NSError::from_owned_raw_unchecked(raw) })
+    }
+
+    fn current_item(&self) -> Option<AVPlayerItem> {
+        let self_raw = self.as_raw();
+        let raw_ptr =
+            unsafe { choco_AVFoundation_AVPlayerInterface_instance_currentItem(self_raw) };
+        raw_ptr
+            .into_opt()
+            .map(|raw| unsafe { AVPlayerItem::from_owned_raw_unchecked(raw) })
+    }
+
+    fn play(&self) {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVPlayerInterface_instance_play(self_raw) }
+    }
+
+    fn pause(&self) {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVPlayerInterface_instance_pause(self_raw) }
+    }
+
+    fn rate(&self) -> f32 {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVPlayerInterface_instance_rate(self_raw) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = AVFoundation)]
+pub struct AVPlayer {
+    ptr: ObjCPtr,
+}
+
+impl NSObjectInterface for AVPlayer {}
+impl AVAssetReaderOutputInterface for AVPlayer {}
+impl AVPlayerInterface for AVPlayer {}
+impl ValidObjCGeneric for AVPlayer {}
+
+impl From<AVPlayer> for NSObject {
+    fn from(obj: AVPlayer) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVPlayer {}
+
+//-------------------------------------------------------------------
+// AVAudioPlayer
+
+extern "C" {
+    fn choco_AVFoundation_AVAudioPlayer_class() -> NullableObjCClassPtr;
+    fn choco_AVFoundation_AVAudioPlayerInterface_class_newWithContentsOfURL_error(
+        class: ObjCClassPtr,
+        url: RawObjCPtr,
+        error: *mut NullableRawObjCPtr,
+    ) -> NullableRawObjCPtr;
+    fn choco_AVFoundation_AVAudioPlayerInterface_instance_play(self_: RawObjCPtr) -> BOOL;
+    fn choco_AVFoundation_AVAudioPlayerInterface_instance_pause(self_: RawObjCPtr);
+    fn choco_AVFoundation_AVAudioPlayerInterface_instance_stop(self_: RawObjCPtr);
+    fn choco_AVFoundation_AVAudioPlayerInterface_instance_rate(self_: RawObjCPtr) -> f32;
+}
+
+pub trait AVAudioPlayerInterface: NSObjectInterface {
+    fn new_with_contents_of_url(url: &impl NSURLInterface) -> Result<Self::Owned, NSError> {
+        let mut raw_unowned_error = NullableRawObjCPtr::empty();
+        let raw_ptr = unsafe {
+            choco_AVFoundation_AVAudioPlayerInterface_class_newWithContentsOfURL_error(
+                Self::class(),
+                url.as_raw(),
+                &mut raw_unowned_error,
+            )
+        };
+        unsafe { make_object_result_unchecked::<Self>(raw_ptr, raw_unowned_error) }
+    }
+
+    fn play(&self) -> bool {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVAudioPlayerInterface_instance_play(self_raw) }.into()
+    }
+
+    fn pause(&self) {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVAudioPlayerInterface_instance_pause(self_raw) }
+    }
+
+    fn stop(&self) {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVAudioPlayerInterface_instance_stop(self_raw) }
+    }
+
+    fn rate(&self) -> f32 {
+        let self_raw = self.as_raw();
+        unsafe { choco_AVFoundation_AVAudioPlayerInterface_instance_rate(self_raw) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, NSObjectProtocol)]
+#[choco(framework = AVFoundation)]
+pub struct AVAudioPlayer {
+    ptr: ObjCPtr,
+}
+
+impl NSObjectInterface for AVAudioPlayer {}
+impl AVAssetReaderOutputInterface for AVAudioPlayer {}
+impl AVAudioPlayerInterface for AVAudioPlayer {}
+impl ValidObjCGeneric for AVAudioPlayer {}
+
+impl From<AVAudioPlayer> for NSObject {
+    fn from(obj: AVAudioPlayer) -> Self {
+        unsafe { Self::from_owned_unchecked(obj.ptr) }
+    }
+}
+
+impl IsKindOf<NSObject> for AVAudioPlayer {}

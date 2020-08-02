@@ -351,6 +351,23 @@ NSUInteger choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(__un
 }
 
 //-------------------------------------------------------------------
+// NSError
+
+CLASS_FUNCTION_DEFINITION(Foundation, NSError)
+
+NSInteger choco_Foundation_NSErrorInterface_instance_code(__unsafe_unretained NSError *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.code;
+    )
+}
+
+NS_RETURNS_RETAINED NSString *choco_Foundation_NSErrorInterface_instance_domain(__unsafe_unretained NSError *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.domain;
+    )
+}
+
+//-------------------------------------------------------------------
 // AVAsynchronousKeyValueLoading
 
 AVKeyValueStatus choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(__unsafe_unretained id<AVAsynchronousKeyValueLoading> self_, __unsafe_unretained NSString *key, NSError * _Nullable __autoreleasing * _Nullable outError) {
@@ -435,5 +452,110 @@ CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReaderOutput)
 // AVAssetReaderSampleReferenceOutput
 
 CLASS_FUNCTION_DEFINITION(AVFoundation, AVAssetReaderSampleReferenceOutput)
+
+//-------------------------------------------------------------------
+// AVPlayerItem
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVPlayerItem)
+
+NS_RETURNS_RETAINED AVPlayerItem *choco_AVFoundation_AVPlayerItemInterface_class_newWithURL(Class klass, __unsafe_unretained NSURL *url) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithURL:url];
+    )
+}
+
+NS_RETURNS_RETAINED AVPlayerItem *choco_AVFoundation_AVPlayerItemInterface_class_newWithAsset(Class klass, __unsafe_unretained AVAsset *asset) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithAsset:asset];
+    )
+}
+
+NS_RETURNS_RETAINED NSError *choco_AVFoundation_AVPlayerItemInterface_instance_error(__unsafe_unretained AVPlayerItem *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.error;
+    )
+}
+
+//-------------------------------------------------------------------
+// AVPlayer
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVPlayer)
+
+NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVPlayerInterface_class_newWithURL(Class klass, __unsafe_unretained NSURL *url) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithURL:url];
+    )
+}
+
+NS_RETURNS_RETAINED AVURLAsset *choco_AVFoundation_AVPlayerInterface_class_newWithPlayerItem(Class klass, __unsafe_unretained AVPlayerItem *item) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithPlayerItem:item];
+    )
+}
+
+void choco_AVFoundation_AVPlayerInterface_instance_play(__unsafe_unretained AVPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ play];
+    )
+}
+
+void choco_AVFoundation_AVPlayerInterface_instance_pause(__unsafe_unretained AVPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ pause];
+    )
+}
+
+float choco_AVFoundation_AVPlayerInterface_instance_rate(__unsafe_unretained AVPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.rate;
+    )
+}
+
+NS_RETURNS_RETAINED AVPlayerItem *choco_AVFoundation_AVPlayerInterface_instance_currentItem(__unsafe_unretained AVPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.currentItem;
+    )
+}
+
+NS_RETURNS_RETAINED NSError *choco_AVFoundation_AVPlayerInterface_instance_error(__unsafe_unretained AVPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.error;
+    )
+}
+
+//-------------------------------------------------------------------
+// AVAudioPlayer
+
+CLASS_FUNCTION_DEFINITION(AVFoundation, AVAudioPlayer)
+
+NS_RETURNS_RETAINED AVAudioPlayer *choco_AVFoundation_AVAudioPlayerInterface_class_newWithContentsOfURL_error(Class klass, __unsafe_unretained NSURL *url, NSError * _Nullable __autoreleasing * _Nullable outError) {
+    ABORT_ON_EXCEPTION(
+        return [[klass alloc] initWithContentsOfURL:url error:outError];
+    )
+}
+
+BOOL choco_AVFoundation_AVAudioPlayerInterface_instance_play(__unsafe_unretained AVAudioPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ play];
+    )
+}
+
+void choco_AVFoundation_AVAudioPlayerInterface_instance_pause(__unsafe_unretained AVAudioPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ pause];
+    )
+}
+
+void choco_AVFoundation_AVAudioPlayerInterface_instance_stop(__unsafe_unretained AVAudioPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return [self_ stop];
+    )
+}
+
+float choco_AVFoundation_AVAudioPlayerInterface_instance_rate(__unsafe_unretained AVAudioPlayer *self_) {
+    ABORT_ON_EXCEPTION(
+        return self_.rate;
+    )
+}
 
 } // extern "C"

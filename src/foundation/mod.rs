@@ -576,12 +576,40 @@ mod number_tests {
 
 extern "C" {
     fn choco_Foundation_NSError_class() -> NullableObjCClassPtr;
+    fn choco_Foundation_NSErrorInterface_instance_code(self_: RawObjCPtr) -> NSInteger;
+    fn choco_Foundation_NSErrorInterface_instance_domain(self_: RawObjCPtr) -> NullableRawObjCPtr;
+    fn choco_Foundation_NSErrorInterface_instance_localizedDescription(
+        self_: RawObjCPtr,
+    ) -> NullableRawObjCPtr;
 }
 
 pub trait NSErrorInterface: NSObjectInterface
 where
     Self: NSCopyingProtocol,
 {
+    fn code(&self) -> NSInteger {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSErrorInterface_instance_code(raw_self) }
+    }
+
+    fn domain(&self) -> NSString {
+        let raw_self = self.as_raw();
+        let raw_ptr = unsafe { choco_Foundation_NSErrorInterface_instance_domain(raw_self) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[NSError domain] to return a non null pointer");
+        unsafe { NSString::from_owned_raw_unchecked(raw) }
+    }
+
+    fn localized_description(&self) -> NSString {
+        let raw_self = self.as_raw();
+        let raw_ptr =
+            unsafe { choco_Foundation_NSErrorInterface_instance_localizedDescription(raw_self) };
+        let raw = raw_ptr
+            .into_opt()
+            .expect("expecting -[NSError localizedDescription] to return a non null pointer");
+        unsafe { NSString::from_owned_raw_unchecked(raw) }
+    }
 }
 
 #[repr(transparent)]
