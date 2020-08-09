@@ -408,13 +408,13 @@ impl NSCopyingProtocol for NSDate {
     type Immutable = Self;
 }
 impl ValidObjCGeneric for NSDate {}
+impl IsKindOf<NSObject> for NSDate {}
 
 impl From<NSDate> for NSObject {
     fn from(obj: NSDate) -> Self {
         unsafe { Self::from_owned_unchecked(obj.ptr) }
     }
 }
-impl IsKindOf<NSDate> for NSString {}
 
 impl std::ops::Sub for &NSDate {
     type Output = NSTimeInterval;
