@@ -1,7 +1,8 @@
 use crate::base::core_foundation::*;
 use crate::base::objc::*;
+use crate::base::ptr;
 use crate::core_graphics::CGRect;
-use choco_macro::{fourcc, CFType};
+use choco_macro::fourcc;
 
 pub(crate) mod prelude {
     pub use super::CMAudioFormatDescriptionInterface;
@@ -87,12 +88,12 @@ pub struct CMTimeRange {
 #[link(name = "CoreMedia", kind = "framework")]
 extern "C" {
     fn CMFormatDescriptionGetTypeID() -> CFTypeID;
-    fn CMFormatDescriptionGetMediaType(desc: RawCFTypeRef) -> CMMediaType;
+    fn CMFormatDescriptionGetMediaType(desc: ptr::cf::RawRef) -> CMMediaType;
     fn CMVideoFormatDescriptionGetCleanAperture(
-        video_desc: RawCFTypeRef,
+        video_desc: ptr::cf::RawRef,
         origin_is_at_top_left: Boolean,
     ) -> CGRect;
-    fn CMVideoFormatDescriptionGetDimensions(video_desc: RawCFTypeRef) -> CMVideoDimensions;
+    fn CMVideoFormatDescriptionGetDimensions(video_desc: ptr::cf::RawRef) -> CMVideoDimensions;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -151,20 +152,16 @@ pub trait CMFormatDescriptionInterface: CFTypeInterface {
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMFormatDescription {}
 pub trait CMAudioFormatDescriptionInterface: CMFormatDescriptionInterface {}
 impl ValidObjCGeneric for CMFormatDescription {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMAudioFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMAudioFormatDescription {}
@@ -189,10 +186,8 @@ pub trait CMVideoFormatDescriptionInterface: CMFormatDescriptionInterface {
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMVideoFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMVideoFormatDescription {}
@@ -200,10 +195,8 @@ impl CMVideoFormatDescriptionInterface for CMVideoFormatDescription {}
 
 pub trait CMMuxedFormatDescriptionInterface: CMFormatDescriptionInterface {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMMuxedFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMMuxedFormatDescription {}
@@ -211,10 +204,8 @@ impl CMMuxedFormatDescriptionInterface for CMMuxedFormatDescription {}
 
 pub trait CMMetadataFormatDescriptionInterface: CMFormatDescriptionInterface {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMMetadataFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMMetadataFormatDescription {}
@@ -222,10 +213,8 @@ impl CMMetadataFormatDescriptionInterface for CMMetadataFormatDescription {}
 
 pub trait CMTextFormatDescriptionInterface: CMFormatDescriptionInterface {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMTextFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMTextFormatDescription {}
@@ -233,10 +222,8 @@ impl CMTextFormatDescriptionInterface for CMTextFormatDescription {}
 
 pub trait CMTimeCodeFormatDescriptionInterface: CMFormatDescriptionInterface {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMTimeCodeFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMTimeCodeFormatDescription {}
@@ -244,10 +231,8 @@ impl CMTimeCodeFormatDescriptionInterface for CMTimeCodeFormatDescription {}
 
 pub trait CMClosedCaptionFormatDescriptionInterface: CMFormatDescriptionInterface {}
 
-#[repr(transparent)]
-#[derive(Clone, CFType)]
 pub struct CMClosedCaptionFormatDescription {
-    ptr: CFTypeRef,
+    ptr: ptr::cf::OwnedRef,
 }
 
 impl CMFormatDescriptionInterface for CMClosedCaptionFormatDescription {}

@@ -1,16 +1,16 @@
 use super::*;
-use choco_macro::NSObjectProtocol;
+use crate::base::ptr;
 
 //-------------------------------------------------------------------
 // NSDictionary interface
 
 extern "C" {
-    fn choco_Foundation_NSDictionary_class() -> NullableObjCClassPtr;
-    fn choco_Foundation_NSDictionaryInterface_instance_count(self_: RawObjCPtr) -> usize;
+    fn choco_Foundation_NSDictionary_class() -> ptr::objc::ClassPtr;
+    fn choco_Foundation_NSDictionaryInterface_instance_count(self_: ptr::objc::RawPtr) -> usize;
     fn choco_Foundation_NSDictionaryInterface_instance_objectForKey(
-        self_: RawObjCPtr,
-        key: RawObjCPtr,
-    ) -> NullableRawObjCPtr;
+        self_: ptr::objc::RawPtr,
+        key: ptr::objc::RawPtr,
+    ) -> ptr::objc::NullableRawPtr;
 }
 
 pub trait NSDictionaryInterface<K, V>: NSObjectInterface
@@ -33,29 +33,61 @@ where
     {
         let raw_self = self.as_raw();
         let raw_key = key.as_raw();
-        let raw_ptr = unsafe {
+        unsafe {
             choco_Foundation_NSDictionaryInterface_instance_objectForKey(raw_self, raw_key)
-        };
-        raw_ptr
-            .into_opt()
-            .map(|raw| unsafe { V::from_owned_raw_unchecked(raw) })
+                .into_opt()
+                .map(|raw| V::from_owned_ptr_unchecked(raw.consider_owned()))
+        }
     }
 }
 
 //-------------------------------------------------------------------
 // NSDictionary
 
-#[repr(transparent)]
-#[derive(Clone, NSObjectProtocol)]
-#[choco(framework = Foundation)]
 pub struct NSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    ptr: ObjCPtr,
+    ptr: ptr::objc::OwnedPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
+}
+
+impl<K, V> ptr::objc::AsRawPtr for NSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    fn as_raw(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw()
+    }
+}
+
+impl<K, V> FromOwnedPtr for NSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
+        Self {
+            ptr,
+            _marker_k: std::marker::PhantomData,
+            _marker_v: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<K, V> NSObjectProtocol for NSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    type Owned = Self;
+
+    fn class() -> ptr::objc::ClassPtr {
+        unsafe { choco_Foundation_NSDictionary_class() }
+    }
 }
 
 impl<K, V> NSObjectInterface for NSDictionary<K, V>
@@ -102,30 +134,53 @@ where
 {
 }
 
-impl<K, V> From<NSDictionary<K, V>> for NSObject
-where
-    K: ValidObjCGeneric + NSCopyingProtocol,
-    V: ValidObjCGeneric,
-{
-    fn from(obj: NSDictionary<K, V>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
-}
-
 //-------------------------------------------------------------------
 // ImmutableNSDictionary
 
-#[repr(transparent)]
-#[derive(Clone, NSObjectProtocol)]
-#[choco(framework = Foundation, objc_class = NSDictionary)]
 pub struct ImmutableNSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    ptr: ObjCPtr,
+    ptr: ptr::objc::OwnedPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
+}
+
+impl<K, V> ptr::objc::AsRawPtr for ImmutableNSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    fn as_raw(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw()
+    }
+}
+
+impl<K, V> FromOwnedPtr for ImmutableNSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
+        Self {
+            ptr,
+            _marker_k: std::marker::PhantomData,
+            _marker_v: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<K, V> NSObjectProtocol for ImmutableNSDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    type Owned = Self;
+
+    fn class() -> ptr::objc::ClassPtr {
+        unsafe { choco_Foundation_NSDictionary_class() }
+    }
 }
 
 impl<K, V> NSObjectInterface for ImmutableNSDictionary<K, V>
@@ -145,27 +200,6 @@ where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-}
-
-impl<K, V> From<ImmutableNSDictionary<K, V>> for NSObject
-where
-    K: ValidObjCGeneric + NSCopyingProtocol,
-    V: ValidObjCGeneric,
-{
-    fn from(obj: ImmutableNSDictionary<K, V>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
-}
-
-// A NSDictionary known to be immutable can be used as a normal NSDictionary.
-impl<K, V> From<ImmutableNSDictionary<K, V>> for NSDictionary<K, V>
-where
-    K: ValidObjCGeneric + NSCopyingProtocol,
-    V: ValidObjCGeneric,
-{
-    fn from(obj: ImmutableNSDictionary<K, V>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
 }
 
 impl<K, V> NSCopyingProtocol for ImmutableNSDictionary<K, V>
@@ -202,17 +236,19 @@ where
 // NSMutableDictionary
 
 extern "C" {
-    fn choco_Foundation_NSMutableDictionary_class() -> NullableObjCClassPtr;
+    fn choco_Foundation_NSMutableDictionary_class() -> ptr::objc::ClassPtr;
     fn choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
-        self_: RawObjCPtr,
-        object: RawObjCPtr,
-        key: RawObjCPtr,
+        self_: ptr::objc::RawPtr,
+        object: ptr::objc::RawPtr,
+        key: ptr::objc::RawPtr,
     );
     fn choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
-        self_: RawObjCPtr,
-        key: RawObjCPtr,
+        self_: ptr::objc::RawPtr,
+        key: ptr::objc::RawPtr,
     );
-    fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(self_: RawObjCPtr);
+    fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(
+        self_: ptr::objc::RawPtr,
+    );
 }
 
 pub trait NSMutableDictionaryInterface<K, V>: NSDictionaryInterface<K, V>
@@ -254,17 +290,50 @@ where
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, NSObjectProtocol)]
-#[choco(framework = Foundation)]
 pub struct NSMutableDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    ptr: ObjCPtr,
+    ptr: ptr::objc::OwnedPtr,
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
+}
+
+impl<K, V> ptr::objc::AsRawPtr for NSMutableDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    fn as_raw(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw()
+    }
+}
+
+impl<K, V> FromOwnedPtr for NSMutableDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
+        Self {
+            ptr,
+            _marker_k: std::marker::PhantomData,
+            _marker_v: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<K, V> NSObjectProtocol for NSMutableDictionary<K, V>
+where
+    K: ValidObjCGeneric + NSCopyingProtocol,
+    V: ValidObjCGeneric,
+{
+    type Owned = Self;
+
+    fn class() -> ptr::objc::ClassPtr {
+        unsafe { choco_Foundation_NSMutableDictionary_class() }
+    }
 }
 
 impl<K, V> NSObjectInterface for NSMutableDictionary<K, V>
@@ -316,26 +385,6 @@ where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-}
-
-impl<K, V> From<NSMutableDictionary<K, V>> for NSObject
-where
-    K: ValidObjCGeneric + NSCopyingProtocol,
-    V: ValidObjCGeneric,
-{
-    fn from(obj: NSMutableDictionary<K, V>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
-}
-
-impl<K, V> From<NSMutableDictionary<K, V>> for NSDictionary<K, V>
-where
-    K: ValidObjCGeneric + NSCopyingProtocol,
-    V: ValidObjCGeneric,
-{
-    fn from(obj: NSMutableDictionary<K, V>) -> Self {
-        unsafe { Self::from_owned_unchecked(obj.ptr) }
-    }
 }
 
 #[cfg(test)]

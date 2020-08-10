@@ -2,7 +2,7 @@
 // (nothing suprising as they have been made to be used in concert)
 // FFI is simpler as we're just calling C functions.
 
-use std::ptr::NonNull;
+use crate::base::ptr;
 
 pub type CFIndex = isize;
 pub type CFHashCode = usize;
@@ -34,73 +34,13 @@ pub struct CFTypeID(usize);
 
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
-    fn CFRelease(cf: RawCFTypeRef);
-    fn CFRetain(cf: RawCFTypeRef) -> RawNullableCFTypeRef;
-    fn CFShow(cf: RawCFTypeRef);
-    fn CFGetRetainCount(cf: RawCFTypeRef) -> CFIndex;
-    fn CFHash(cf: RawCFTypeRef) -> CFHashCode;
-    fn CFEqual(cf1: RawCFTypeRef, cf2: RawCFTypeRef) -> Boolean;
-    fn CFGetTypeID(cf: RawCFTypeRef) -> CFTypeID;
-}
-
-#[repr(transparent)]
-#[derive(Copy, Clone)]
-pub struct RawCFTypeRef {
-    pub(super) ptr: NonNull<OpaqueCFType>,
-}
-
-// I would like to use Option<RawCFTypeRef> instead but I'm not sure its memory layout is the same.
-#[repr(transparent)]
-#[derive(Copy, Clone)]
-pub struct RawNullableCFTypeRef {
-    ptr: Option<NonNull<OpaqueCFType>>,
-}
-
-impl RawNullableCFTypeRef {
-    pub fn into_opt(self) -> Option<RawCFTypeRef> {
-        self.ptr.map(|ptr| RawCFTypeRef { ptr })
-    }
-}
-
-impl From<RawCFTypeRef> for RawNullableCFTypeRef {
-    fn from(ptr: RawCFTypeRef) -> Self {
-        Self { ptr: Some(ptr.ptr) }
-    }
-}
-
-#[repr(transparent)]
-pub struct CFTypeRef {
-    pub(super) raw: RawCFTypeRef,
-}
-
-impl CFTypeRef {
-    /// # Safety
-    /// You must be sure that you own the pointer.
-    /// The pointer will be released when we go out of scope.
-    pub unsafe fn from_raw_unchecked(raw: RawCFTypeRef) -> Self {
-        Self { raw }
-    }
-
-    pub fn as_raw(&self) -> RawCFTypeRef {
-        self.raw
-    }
-}
-
-impl Drop for CFTypeRef {
-    fn drop(&mut self) {
-        unsafe {
-            CFRelease(self.as_raw());
-        }
-    }
-}
-
-impl Clone for CFTypeRef {
-    fn clone(&self) -> Self {
-        let raw = unsafe { CFRetain(self.as_raw()) }
-            .into_opt()
-            .expect("expecting CFRetain() to return a non null pointer");
-        unsafe { Self::from_raw_unchecked(raw) }
-    }
+    fn CFRelease(cf: ptr::cf::RawRef);
+    fn CFRetain(cf: ptr::cf::RawRef) -> ptr::cf::NullableRawRef;
+    fn CFShow(cf: ptr::cf::RawRef);
+    fn CFGetRetainCount(cf: ptr::cf::RawRef) -> CFIndex;
+    fn CFHash(cf: ptr::cf::RawRef) -> CFHashCode;
+    fn CFEqual(cf1: ptr::cf::RawRef, cf2: ptr::cf::RawRef) -> Boolean;
+    fn CFGetTypeID(cf: ptr::cf::RawRef) -> CFTypeID;
 }
 
 pub trait CFTypeInterface
@@ -110,7 +50,7 @@ where
     // all objects should be clonable (here cloning just means increasing the reference count)
     Self: Clone,
 {
-    fn as_raw(&self) -> RawCFTypeRef;
+    fn as_raw(&self) -> ptr::cf::RawRef;
 
     fn equal(&self, other: &impl CFTypeInterface) -> bool {
         let self_raw = self.as_raw();

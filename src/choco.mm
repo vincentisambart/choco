@@ -32,7 +32,12 @@ extern "C" {
 
 #define CLASS_FUNCTION_DEFINITION(location, class_name) \
     Class choco_ ## location ## _ ## class_name ## _class(void) { \
-        return [class_name class]; \
+        Class klass = [class_name class]; \
+        if (__builtin_expect(klass == nil, 0)) { \
+            NSLog(@"[%s: class] should not return a null value", #class_name); \
+            abort(); \
+        } \
+        return klass; \
     }
 
 // Some explanation of the attributes used:

@@ -1,4 +1,4 @@
-use choco_macro::NSObjectProtocol;
+use crate::base::ptr;
 use std::ptr::NonNull;
 
 pub type NSInteger = isize;
@@ -20,252 +20,71 @@ impl From<bool> for BOOL {
     }
 }
 
-#[repr(C)]
-struct OpaqueObjCObject {
-    _private: [u8; 0],
-}
-
-#[repr(C)]
-pub(crate) struct OpaqueObjCClass {
-    _private: [u8; 0],
-}
-
-#[repr(C)]
-struct OpaqueAutoreleasePool {
-    _private: [u8; 0],
-}
-
+// TODO: Move NSObject to foundation, even though technically it's part of the runtime.
 extern "C" {
-    fn choco_base_NSObjectProtocol_instance_hash(self_: RawObjCPtr) -> NSUInteger;
+    fn choco_base_NSObjectProtocol_instance_hash(self_: ptr::objc::RawPtr) -> NSUInteger;
     fn choco_base_NSObjectProtocol_instance_isEqual(
-        self_: RawObjCPtr,
-        other: NullableRawObjCPtr,
+        self_: ptr::objc::RawPtr,
+        other: ptr::objc::NullableRawPtr,
     ) -> BOOL;
     fn choco_base_NSObjectProtocol_instance_isKindOfClass(
-        self_: RawObjCPtr,
-        class: ObjCClassPtr,
+        self_: ptr::objc::RawPtr,
+        class: ptr::objc::ClassPtr,
     ) -> BOOL;
-    fn choco_base_NSObjectProtocol_instance_description(self_: RawObjCPtr) -> NullableRawObjCPtr;
+    fn choco_base_NSObjectProtocol_instance_description(
+        self_: ptr::objc::RawPtr,
+    ) -> ptr::objc::NullableRawPtr;
     fn choco_base_NSObjectProtocol_instance_debugDescription(
-        self_: RawObjCPtr,
-    ) -> NullableRawObjCPtr;
+        self_: ptr::objc::RawPtr,
+    ) -> ptr::objc::NullableRawPtr;
 
-    fn choco_base_NSObject_class() -> NullableObjCClassPtr;
-    fn choco_base_NSObjectInterface_class_new(class: ObjCClassPtr) -> NullableRawObjCPtr;
+    fn choco_base_NSObject_class() -> ptr::objc::ClassPtr;
+    fn choco_base_NSObjectInterface_class_new(
+        class: ptr::objc::ClassPtr,
+    ) -> ptr::objc::NullableRawPtr;
 }
 
-// ARC runtime support - https://clang.llvm.org/docs/AutomaticReferenceCounting.html#runtime-support
-#[link(name = "objc", kind = "dylib")]
-extern "C" {
-    fn objc_autoreleasePoolPush() -> Option<NonNull<OpaqueAutoreleasePool>>;
-    fn objc_autoreleasePoolPop(pool: NonNull<OpaqueAutoreleasePool>);
-    fn objc_release(value: RawObjCPtr);
-    fn objc_retain(value: RawObjCPtr) -> NullableRawObjCPtr;
-    fn class_getName(class: ObjCClassPtr) -> *const i8;
+// TODO: Move to ptr module
+pub trait FromOwnedPtr {
+    unsafe fn from_owned_ptr_unchecked(owned_ptr: ptr::objc::OwnedPtr) -> Self;
 }
 
-// I would like to use Option<ObjCClassPtr> instead but I'm not sure
-// if its memory layout is guaranted to be the same.
-#[derive(Copy, Clone)]
-#[repr(transparent)]
-pub struct NullableObjCClassPtr {
-    ptr: Option<NonNull<OpaqueObjCClass>>,
-}
-
-impl NullableObjCClassPtr {
-    pub fn into_opt(self) -> Option<ObjCClassPtr> {
-        self.ptr.map(|ptr| ObjCClassPtr { ptr })
-    }
-}
-
-#[derive(Copy, Clone)]
-#[repr(transparent)]
-pub struct ObjCClassPtr {
-    ptr: NonNull<OpaqueObjCClass>,
-}
-
-impl From<ObjCClassPtr> for NullableObjCClassPtr {
-    fn from(ptr: ObjCClassPtr) -> Self {
-        Self { ptr: Some(ptr.ptr) }
-    }
-}
-
-impl ObjCClassPtr {
-    pub fn class_name(&self) -> &str {
-        unsafe {
-            let ptr = class_getName(*self);
-            std::ffi::CStr::from_ptr(ptr)
-                .to_str()
-                .expect("expecting class_getName() to return a non null pointer")
-        }
-    }
-}
-
-// I would like to use Option<RawObjCPtr> instead but I'm not sure
-// if its memory layout is guaranted to be the same.
-#[derive(Copy, Clone)]
-#[repr(transparent)]
-pub struct NullableRawObjCPtr {
-    ptr: Option<NonNull<OpaqueObjCObject>>,
-}
-
-impl NullableRawObjCPtr {
-    pub fn empty() -> Self {
-        NullableRawObjCPtr { ptr: None }
-    }
-
-    pub fn into_opt(self) -> Option<RawObjCPtr> {
-        self.ptr.map(|ptr| RawObjCPtr { ptr })
-    }
-}
-
-/// Raw Objective-C pointer without any reference counting.
-#[derive(Copy, Clone)]
-#[repr(transparent)]
-pub struct RawObjCPtr {
-    ptr: NonNull<OpaqueObjCObject>,
-}
-
-impl From<RawObjCPtr> for NullableRawObjCPtr {
-    fn from(ptr: RawObjCPtr) -> Self {
-        Self { ptr: Some(ptr.ptr) }
-    }
-}
-
-impl From<super::core_foundation::RawCFTypeRef> for RawObjCPtr {
-    fn from(ptr: super::core_foundation::RawCFTypeRef) -> Self {
-        Self {
-            ptr: ptr.ptr.cast(),
-        }
-    }
-}
-
-impl From<RawObjCPtr> for super::core_foundation::RawCFTypeRef {
-    fn from(ptr: RawObjCPtr) -> Self {
-        Self {
-            ptr: ptr.ptr.cast(),
-        }
-    }
-}
-
-/// Owned reference-counted Objective-C pointer.
-#[repr(transparent)]
-pub struct ObjCPtr {
-    raw: RawObjCPtr,
-}
-
-impl ObjCPtr {
-    /// # Safety
-    /// You must be sure that you own the pointer.
-    /// The pointer will be released when we go out of scope.
-    pub unsafe fn from_raw_unchecked(raw: RawObjCPtr) -> Self {
-        Self { raw }
-    }
-
-    pub fn as_raw(&self) -> RawObjCPtr {
-        self.raw
-    }
-}
-
-impl Drop for ObjCPtr {
-    fn drop(&mut self) {
-        unsafe {
-            objc_release(self.as_raw());
-        }
-    }
-}
-
-impl Clone for ObjCPtr {
-    fn clone(&self) -> Self {
-        let raw = unsafe { objc_retain(self.as_raw()) }
-            .into_opt()
-            .expect("expecting objc_retain() to return a non null pointer");
-        unsafe { Self::from_raw_unchecked(raw) }
-    }
-}
-
-impl From<super::core_foundation::CFTypeRef> for ObjCPtr {
-    fn from(owned: super::core_foundation::CFTypeRef) -> Self {
-        let raw = owned.raw.into();
-        std::mem::forget(owned);
-        Self { raw }
-    }
-}
-
-impl From<ObjCPtr> for super::core_foundation::CFTypeRef {
-    fn from(owned: ObjCPtr) -> Self {
-        let raw = owned.raw.into();
-        std::mem::forget(owned);
-        Self { raw }
-    }
-}
-
-/// Types that implement AsRawObjCPtr but are not LikeObjCPtr are non reference counted types like StaticString.
-pub trait AsRawObjCPtr {
-    fn as_raw(&self) -> RawObjCPtr;
-}
-
-/// Behavior expected from an owned reference counted Objective-C pointer.
-/// That is implemented by Objective-C types, but also Core Foundation ones.
-pub trait LikeObjCPtr
+// TODO: Is that really safe?
+impl<T> ptr::Retain for T
 where
-    // to be able to have default implementations of methods returning Self
-    Self: Sized,
-    // all objects should be clonable (here cloning just means increasing the reference count)
-    Self: Clone,
-    Self: AsRawObjCPtr,
+    T: ptr::objc::AsRawPtr + FromOwnedPtr,
 {
-    /// Create a new struct owning its Objective-C pointer, without doing any check.
-    ///
-    /// # Safety
-    /// You must be sure that Objective-C pointer is of the correct type, and that you own it.
-    /// The pointer will be released this struct goes out of scope.
-    unsafe fn from_owned_raw_unchecked(raw: RawObjCPtr) -> Self {
-        Self::from_owned_unchecked(ObjCPtr::from_raw_unchecked(raw))
-    }
+    type Owned = Self;
 
-    /// Create a new struct owning its Objective-C pointer, from a non-owning pointer, without doing any check.
-    ///
-    /// # Safety
-    /// You must be sure that Objective-C pointer is of the correct type, and that you do not own it.
-    unsafe fn retain_unowned_raw_unchecked(unowned_raw: RawObjCPtr) -> Self {
-        let owned_raw = objc_retain(unowned_raw)
-            .into_opt()
-            .expect("expecting objc_retain() to return a non null pointer");
-        Self::from_owned_raw_unchecked(owned_raw)
+    fn retain(&self) -> Self::Owned {
+        unsafe { Self::from_owned_ptr_unchecked(self.as_raw().retain()) }
     }
-
-    /// Create a new struct owning its Objective-C pointer, without doing any check.
-    ///
-    /// # Safety
-    /// You must be sure that Objective-C pointer is of the correct type.
-    unsafe fn from_owned_unchecked(ptr: ObjCPtr) -> Self;
 }
 
 /// Indicates that the type can be used as type parameter for Objective-C classes like NSArray.
 /// That does not include special types like StaticNSString or ImmutableNSString.
-pub trait ValidObjCGeneric: LikeObjCPtr {}
+pub trait ValidObjCGeneric: ptr::objc::AsRawPtr + FromOwnedPtr {}
+
+// TODO: IsKinfOf should maybe be unsafe
+/// Marker trait used for handling of type parameters in NSArray and NSDictionary.
+pub trait IsKindOf<T: ValidObjCGeneric>: ptr::objc::AsRawPtr {}
+impl<T: ValidObjCGeneric> IsKindOf<T> for T {}
 
 pub trait NSObjectProtocol
 where
-    // to be able to have default implementations of methods returning Self
+    Self: ptr::objc::AsRawPtr,
     Self: Sized,
-    // all objects should be clonable (here cloning just means increasing the refcount)
-    Self: Clone,
-    Self: AsRawObjCPtr,
 {
-    /// Owned (retained) version of the type. Most of the time it will be Self.
-    /// Unowned versions are not reference counted, generally for statics.
-    type Owned: NSObjectProtocol + LikeObjCPtr;
+    type Owned: FromOwnedPtr;
 
-    /// Objective-C class this struct represents.
-    fn class() -> ObjCClassPtr;
+    /// Objective-C class represented by the struct implementing this trait..
+    fn class() -> ptr::objc::ClassPtr;
 
     fn hash(&self) -> usize {
         unsafe { choco_base_NSObjectProtocol_instance_hash(self.as_raw()) }
     }
     // In Objective-C, the parameter to -[NSObject isEqual:] is nullable,
-    // but that's not very useful and makes things hard to use in Rust so here we consider it non-nullable.
+    // we consider it non-nullable to makes things simpler.
     fn is_equal(&self, obj: &impl NSObjectProtocol) -> bool {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
@@ -273,7 +92,7 @@ where
         ret.into()
     }
 
-    fn is_kind_of(&self, class: ObjCClassPtr) -> bool {
+    fn is_kind_of(&self, class: ptr::objc::ClassPtr) -> bool {
         let self_raw = self.as_raw();
         let ret = unsafe { choco_base_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
         ret.into()
@@ -281,44 +100,71 @@ where
 
     fn description(&self) -> crate::foundation::NSString {
         let self_raw = self.as_raw();
-        let raw_ptr = unsafe { choco_base_NSObjectProtocol_instance_description(self_raw) };
-        let raw = raw_ptr
-            .into_opt()
-            .expect("expecting -[NSObject description] to return a non null pointer");
-        unsafe { crate::foundation::NSString::from_owned_raw_unchecked(raw) }
+        unsafe {
+            let owned_ptr = choco_base_NSObjectProtocol_instance_description(self_raw)
+                .unwrap()
+                .consider_owned();
+            crate::foundation::NSString::from_owned_ptr_unchecked(owned_ptr)
+        }
     }
 
     fn debug_description(&self) -> crate::foundation::NSString {
         let self_raw = self.as_raw();
-        let raw_ptr = unsafe { choco_base_NSObjectProtocol_instance_debugDescription(self_raw) };
-        let raw = raw_ptr
-            .into_opt()
-            .expect("expecting -[NSObject debugDescription] to return a non null pointer");
-        unsafe { crate::foundation::NSString::from_owned_raw_unchecked(raw) }
+        unsafe {
+            let owned_ptr = choco_base_NSObjectProtocol_instance_debugDescription(self_raw)
+                .unwrap()
+                .consider_owned();
+            crate::foundation::NSString::from_owned_ptr_unchecked(owned_ptr)
+        }
     }
 }
 
 pub trait NSObjectInterface: NSObjectProtocol {
     fn new() -> Self::Owned {
-        let raw_ptr = unsafe { choco_base_NSObjectInterface_class_new(Self::class()) };
-        let raw = raw_ptr
-            .into_opt()
-            .expect("expecting +[<class_name> new] to return a non null pointer");
-        unsafe { Self::Owned::from_owned_raw_unchecked(raw) }
+        unsafe {
+            let owned_ptr = choco_base_NSObjectInterface_class_new(Self::class())
+                .unwrap()
+                .consider_owned();
+            Self::Owned::from_owned_ptr_unchecked(owned_ptr)
+        }
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, NSObjectProtocol)]
-#[choco(base)]
 pub struct NSObject {
-    ptr: ObjCPtr,
+    ptr: ptr::objc::OwnedPtr,
+}
+
+impl ptr::objc::AsRawPtr for NSObject {
+    fn as_raw(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw()
+    }
+}
+
+impl FromOwnedPtr for NSObject {
+    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
+        Self { ptr }
+    }
+}
+
+impl NSObjectProtocol for NSObject {
+    type Owned = Self;
+
+    fn class() -> ptr::objc::ClassPtr {
+        unsafe { choco_base_NSObject_class() }
+    }
 }
 
 impl NSObjectInterface for NSObject {}
 impl ValidObjCGeneric for NSObject {}
 
+impl<Rhs: NSObjectInterface> std::cmp::PartialEq<Rhs> for NSObject {
+    fn eq(&self, other: &Rhs) -> bool {
+        self.is_equal(other)
+    }
+}
+
 #[cfg(test)]
+#[allow(clippy::eq_op)]
 mod tests {
     use super::*;
 
@@ -329,19 +175,32 @@ mod tests {
         assert!(obj1.is_equal(&obj1));
         assert!(obj2.is_equal(&obj2));
         assert!(!obj1.is_equal(&obj2));
+        assert!(obj1 == obj1);
+        assert!(obj2 == obj2);
+        assert!(obj1 != obj2);
     }
 
     #[test]
-    fn clone() {
+    fn retain() {
+        use ptr::Retain;
+
         let obj1 = NSObject::new();
-        let obj2 = obj1.clone();
+        let obj2 = obj1.retain();
         assert!(obj1.is_equal(&obj2));
+        assert!(obj1 == obj2);
     }
 }
 
-/// Marker trait used for handling of type parameters in NSArray and NSDictionary.
-pub trait IsKindOf<T: LikeObjCPtr>: AsRawObjCPtr {}
-impl<T: LikeObjCPtr> IsKindOf<T> for T {}
+#[repr(C)]
+struct OpaqueAutoreleasePool {
+    _private: [u8; 0],
+}
+
+#[link(name = "objc", kind = "dylib")]
+extern "C" {
+    fn objc_autoreleasePoolPush() -> Option<NonNull<OpaqueAutoreleasePool>>;
+    fn objc_autoreleasePoolPop(pool: NonNull<OpaqueAutoreleasePool>);
+}
 
 struct AutoreleasePoolGuard {
     pool: NonNull<OpaqueAutoreleasePool>,
