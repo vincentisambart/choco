@@ -60,10 +60,9 @@ where
 /// That does not include special types like StaticNSString or ImmutableNSString.
 pub trait ValidObjCGeneric: ptr::AsRaw + ptr::FromOwned {}
 
-// TODO: IsKindOf should maybe be unsafe
 /// Marker trait used for handling of type parameters in NSArray and NSDictionary.
-pub trait IsKindOf<T: ValidObjCGeneric>: ptr::AsRaw {}
-impl<T: ValidObjCGeneric> IsKindOf<T> for T {}
+pub unsafe trait IsKindOf<T: ValidObjCGeneric>: ptr::AsRaw {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<T> for T {}
 
 pub trait NSObjectProtocol
 where

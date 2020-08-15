@@ -124,7 +124,7 @@ impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSArray<T> {
 
 impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSArray<T> {}
 impl<T: ValidObjCGeneric> ValidObjCGeneric for NSArray<T> {}
-impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSArray<T> {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSArray<T> {}
 
 #[cfg(test)]
 mod array_tests {
@@ -205,8 +205,8 @@ impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for ImmutableNSArray<T> {
 }
 
 impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for ImmutableNSArray<T> {}
-impl<T: ValidObjCGeneric> IsKindOf<NSObject> for ImmutableNSArray<T> {}
-impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for ImmutableNSArray<T> {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for ImmutableNSArray<T> {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for ImmutableNSArray<T> {}
 
 // An ImmutableNSArray is known to be immutable so can be shared between threads.
 unsafe impl<T: ValidObjCGeneric> Send for ImmutableNSArray<T> {}
@@ -279,8 +279,8 @@ impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSMutableArray<T> {
 
 impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSMutableArray<T> {}
 impl<T: ValidObjCGeneric> ValidObjCGeneric for NSMutableArray<T> {}
-impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSMutableArray<T> {}
-impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for NSMutableArray<T> {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSMutableArray<T> {}
+unsafe impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for NSMutableArray<T> {}
 
 #[cfg(test)]
 mod mutable_array_tests {

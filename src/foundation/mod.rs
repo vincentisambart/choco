@@ -315,7 +315,7 @@ impl NSCopyingProtocol for NSURL {
     type Immutable = Self;
 }
 impl ValidObjCGeneric for NSURL {}
-impl IsKindOf<NSObject> for NSURL {}
+unsafe impl IsKindOf<NSObject> for NSURL {}
 
 // A NSSURL is immutable so can be shared between threads.
 unsafe impl Send for NSURL {}
@@ -441,7 +441,7 @@ impl NSCopyingProtocol for NSDate {
     type Immutable = Self;
 }
 impl ValidObjCGeneric for NSDate {}
-impl IsKindOf<NSObject> for NSDate {}
+unsafe impl IsKindOf<NSObject> for NSDate {}
 
 impl std::ops::Sub for &NSDate {
     type Output = NSTimeInterval;
@@ -574,7 +574,7 @@ impl NSCopyingProtocol for NSNumber {
     type Immutable = Self;
 }
 impl ValidObjCGeneric for NSNumber {}
-impl IsKindOf<NSObject> for NSNumber {}
+unsafe impl IsKindOf<NSObject> for NSNumber {}
 
 // A NSNumber is immutable so can be shared between threads.
 unsafe impl Send for NSNumber {}
@@ -688,7 +688,7 @@ impl NSCopyingProtocol for NSError {
     type Immutable = Self;
 }
 impl ValidObjCGeneric for NSError {}
-impl IsKindOf<NSObject> for NSError {}
+unsafe impl IsKindOf<NSObject> for NSError {}
 
 // A NSError is immutable so can be shared between threads.
 unsafe impl Send for NSError {}

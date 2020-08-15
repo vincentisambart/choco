@@ -150,7 +150,7 @@ impl NSObjectProtocol for NSString {
 impl NSObjectInterface for NSString {}
 impl NSStringInterface for NSString {}
 impl ValidObjCGeneric for NSString {}
-impl IsKindOf<NSObject> for NSString {}
+unsafe impl IsKindOf<NSObject> for NSString {}
 
 impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for NSString {
     fn eq(&self, other: &Rhs) -> bool {
@@ -227,8 +227,8 @@ impl NSStringInterface for ImmutableNSString {}
 impl NSCopyingProtocol for ImmutableNSString {
     type Immutable = Self;
 }
-impl IsKindOf<NSObject> for ImmutableNSString {}
-impl IsKindOf<NSString> for ImmutableNSString {}
+unsafe impl IsKindOf<NSObject> for ImmutableNSString {}
+unsafe impl IsKindOf<NSString> for ImmutableNSString {}
 
 impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for ImmutableNSString {
     fn eq(&self, other: &Rhs) -> bool {
@@ -281,8 +281,8 @@ impl NSStringInterface for StaticNSString {}
 impl NSCopyingProtocol for StaticNSString {
     type Immutable = ImmutableNSString;
 }
-impl IsKindOf<NSObject> for StaticNSString {}
-impl IsKindOf<NSString> for StaticNSString {}
+unsafe impl IsKindOf<NSObject> for StaticNSString {}
+unsafe impl IsKindOf<NSString> for StaticNSString {}
 
 impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for StaticNSString {
     fn eq(&self, other: &Rhs) -> bool {
@@ -336,8 +336,8 @@ impl NSObjectInterface for NSMutableString {}
 impl NSStringInterface for NSMutableString {}
 impl NSMutableStringInterface for NSMutableString {}
 impl ValidObjCGeneric for NSMutableString {}
-impl IsKindOf<NSObject> for NSMutableString {}
-impl IsKindOf<NSString> for NSMutableString {}
+unsafe impl IsKindOf<NSObject> for NSMutableString {}
+unsafe impl IsKindOf<NSString> for NSMutableString {}
 
 impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for NSMutableString {
     fn eq(&self, other: &Rhs) -> bool {

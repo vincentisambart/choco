@@ -154,7 +154,7 @@ impl NSCopyingProtocol for AVAsset {
 }
 impl ValidObjCGeneric for AVAsset {}
 
-impl IsKindOf<NSObject> for AVAsset {}
+unsafe impl IsKindOf<NSObject> for AVAsset {}
 
 // AVAsset should be mostly fine to use from multiple threads at the same time.
 unsafe impl Send for AVAsset {}
@@ -236,8 +236,8 @@ impl NSCopyingProtocol for AVURLAsset {
 }
 impl ValidObjCGeneric for AVURLAsset {}
 
-impl IsKindOf<NSObject> for AVURLAsset {}
-impl IsKindOf<AVAsset> for AVURLAsset {}
+unsafe impl IsKindOf<NSObject> for AVURLAsset {}
+unsafe impl IsKindOf<AVAsset> for AVURLAsset {}
 
 // AVAsset should be mostly fine to use from multiple threads at the same time.
 unsafe impl Send for AVURLAsset {}
@@ -420,7 +420,7 @@ impl NSCopyingProtocol for AVAssetTrack {
 }
 impl ValidObjCGeneric for AVAssetTrack {}
 
-impl IsKindOf<NSObject> for AVAssetTrack {}
+unsafe impl IsKindOf<NSObject> for AVAssetTrack {}
 
 //-------------------------------------------------------------------
 // AVAssetReader
@@ -476,7 +476,7 @@ impl NSObjectInterface for AVAssetReader {}
 impl AVAssetReaderInterface for AVAssetReader {}
 impl ValidObjCGeneric for AVAssetReader {}
 
-impl IsKindOf<NSObject> for AVAssetReader {}
+unsafe impl IsKindOf<NSObject> for AVAssetReader {}
 
 //-------------------------------------------------------------------
 // AVAssetReaderTrackOutput
@@ -515,7 +515,7 @@ impl NSObjectInterface for AVAssetReaderTrackOutput {}
 impl AVAssetReaderTrackOutputInterface for AVAssetReaderTrackOutput {}
 impl ValidObjCGeneric for AVAssetReaderTrackOutput {}
 
-impl IsKindOf<NSObject> for AVAssetReaderTrackOutput {}
+unsafe impl IsKindOf<NSObject> for AVAssetReaderTrackOutput {}
 
 //-------------------------------------------------------------------
 // AVAssetReaderOutput
@@ -554,7 +554,7 @@ impl NSObjectInterface for AVAssetReaderOutput {}
 impl AVAssetReaderOutputInterface for AVAssetReaderOutput {}
 impl ValidObjCGeneric for AVAssetReaderOutput {}
 
-impl IsKindOf<NSObject> for AVAssetReaderOutput {}
+unsafe impl IsKindOf<NSObject> for AVAssetReaderOutput {}
 
 //-------------------------------------------------------------------
 // AVAssetReaderSampleReferenceOutput
@@ -594,8 +594,8 @@ impl AVAssetReaderOutputInterface for AVAssetReaderSampleReferenceOutput {}
 impl AVAssetReaderSampleReferenceOutputInterface for AVAssetReaderSampleReferenceOutput {}
 impl ValidObjCGeneric for AVAssetReaderSampleReferenceOutput {}
 
-impl IsKindOf<NSObject> for AVAssetReaderSampleReferenceOutput {}
-impl IsKindOf<AVAssetReaderOutput> for AVAssetReaderSampleReferenceOutput {}
+unsafe impl IsKindOf<NSObject> for AVAssetReaderSampleReferenceOutput {}
+unsafe impl IsKindOf<AVAssetReaderOutput> for AVAssetReaderSampleReferenceOutput {}
 
 //-------------------------------------------------------------------
 // AVPlayerItem
@@ -684,7 +684,7 @@ impl NSCopyingProtocol for AVPlayerItem {
 }
 impl ValidObjCGeneric for AVPlayerItem {}
 
-impl IsKindOf<NSObject> for AVPlayerItem {}
+unsafe impl IsKindOf<NSObject> for AVPlayerItem {}
 
 //-------------------------------------------------------------------
 // AVPlayer
@@ -798,7 +798,7 @@ impl AVAssetReaderOutputInterface for AVPlayer {}
 impl AVPlayerInterface for AVPlayer {}
 impl ValidObjCGeneric for AVPlayer {}
 
-impl IsKindOf<NSObject> for AVPlayer {}
+unsafe impl IsKindOf<NSObject> for AVPlayer {}
 
 //-------------------------------------------------------------------
 // AVAudioPlayer
@@ -879,4 +879,4 @@ impl AVAssetReaderOutputInterface for AVAudioPlayer {}
 impl AVAudioPlayerInterface for AVAudioPlayer {}
 impl ValidObjCGeneric for AVAudioPlayer {}
 
-impl IsKindOf<NSObject> for AVAudioPlayer {}
+unsafe impl IsKindOf<NSObject> for AVAudioPlayer {}
