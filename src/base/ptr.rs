@@ -64,6 +64,7 @@ pub(crate) mod objc {
         }
     }
 
+    // No explicit repr() because not expected to be used on FFI boundaries.
     pub struct OwnedPtr {
         raw: RawPtr,
     }
