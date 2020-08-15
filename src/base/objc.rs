@@ -44,7 +44,6 @@ extern "C" {
     ) -> ptr::objc::NullableRawPtr;
 }
 
-// TODO: Is that really safe?
 impl<T> ptr::Retain for T
 where
     T: ptr::AsRaw + ptr::FromOwned,
@@ -52,6 +51,7 @@ where
     type Owned = Self;
 
     fn retain(&self) -> Self::Owned {
+        // We are sure the source and destination type are the same so that should be safe.
         unsafe { Self::from_owned_ptr_unchecked(self.as_raw_ptr().retain()) }
     }
 }
