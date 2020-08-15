@@ -10,7 +10,7 @@ extern "C" {
     fn choco_Foundation_NSDictionaryInterface_instance_objectForKey(
         self_: ptr::objc::RawPtr,
         key: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait NSDictionaryInterface<K, V>: NSObjectInterface
@@ -35,7 +35,6 @@ where
         let raw_key = key.as_raw_ptr();
         unsafe {
             choco_Foundation_NSDictionaryInterface_instance_objectForKey(raw_self, raw_key)
-                .into_opt()
                 .map(|raw| V::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }

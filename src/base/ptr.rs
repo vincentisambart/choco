@@ -35,7 +35,7 @@ pub(crate) mod objc {
     #[link(name = "objc", kind = "dylib")]
     extern "C" {
         fn objc_release(value: RawPtr);
-        fn objc_retain(value: RawPtr) -> NullableRawPtr;
+        fn objc_retain(value: RawPtr) -> Option<RawPtr>;
     }
 
     #[repr(C)]
@@ -61,30 +61,6 @@ pub(crate) mod objc {
         fn retain(&self) -> Self::Owned {
             let raw = unsafe { objc_retain(*self) }.unwrap();
             Self::Owned { raw }
-        }
-    }
-
-    // I would like to use Option<RawPtr> instead but I'm not sure
-    // if its memory layout is guaranted to be the same.
-    #[derive(Copy, Clone, Default)]
-    #[repr(transparent)]
-    pub struct NullableRawPtr {
-        ptr: Option<NonNull<OpaqueObject>>,
-    }
-
-    impl NullableRawPtr {
-        pub fn into_opt(self) -> Option<RawPtr> {
-            self.ptr.map(|ptr| RawPtr { ptr })
-        }
-
-        pub fn unwrap(self) -> RawPtr {
-            self.into_opt().expect("expecting a non null pointer")
-        }
-    }
-
-    impl From<RawPtr> for NullableRawPtr {
-        fn from(ptr: RawPtr) -> Self {
-            Self { ptr: Some(ptr.ptr) }
         }
     }
 
@@ -153,34 +129,10 @@ pub(crate) mod objc {
         _private: [u8; 0],
     }
 
-    // I would like to use Option<ClassPtr> instead but I'm not sure
-    // if its memory layout is guaranted to be the same.
-    #[derive(Copy, Clone)]
-    #[repr(transparent)]
-    pub struct NullableClassPtr {
-        ptr: Option<NonNull<OpaqueClass>>,
-    }
-
-    impl NullableClassPtr {
-        pub fn into_opt(self) -> Option<ClassPtr> {
-            self.ptr.map(|ptr| ClassPtr { ptr })
-        }
-
-        pub fn unwrap(self) -> ClassPtr {
-            self.into_opt().expect("expecting a non-null class")
-        }
-    }
-
     #[derive(Copy, Clone)]
     #[repr(transparent)]
     pub struct ClassPtr {
         ptr: NonNull<OpaqueClass>,
-    }
-
-    impl From<ClassPtr> for NullableClassPtr {
-        fn from(ptr: ClassPtr) -> Self {
-            Self { ptr: Some(ptr.ptr) }
-        }
     }
 }
 
@@ -190,7 +142,7 @@ pub(crate) mod cf {
     #[link(name = "CoreFoundation", kind = "framework")]
     extern "C" {
         fn CFRelease(cf: RawRef);
-        fn CFRetain(cf: RawRef) -> NullableRawRef;
+        fn CFRetain(cf: RawRef) -> Option<RawRef>;
     }
 
     #[repr(C)]
@@ -202,24 +154,6 @@ pub(crate) mod cf {
     #[derive(Copy, Clone)]
     pub struct RawRef {
         pub(super) ptr: NonNull<OpaqueCFType>,
-    }
-
-    // I would like to use Option<RawRef> instead but I'm not sure
-    // if its memory layout is guaranted to be the same.
-    #[derive(Copy, Clone)]
-    #[repr(transparent)]
-    pub struct NullableRawRef {
-        ptr: Option<NonNull<OpaqueCFType>>,
-    }
-
-    impl NullableRawRef {
-        fn into_opt(self) -> Option<RawRef> {
-            self.ptr.map(|ptr| RawRef { ptr })
-        }
-
-        pub fn unwrap(self) -> RawRef {
-            self.into_opt().expect("expecting a non-null pointer")
-        }
     }
 
     pub struct OwnedRef {

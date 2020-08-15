@@ -16,10 +16,10 @@ extern "C" {
     // Technically, copy and mutableCopy are methods of NSObject, but they will just throw an exception for types that are not NSCopying/NSMutableCopying.
     fn choco_Foundation_NSCopyingProtocol_copy(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSMutableCopyingProtocol_mutableCopy(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait NSCopyingProtocol: NSObjectInterface {
@@ -62,7 +62,7 @@ extern "C" {
     fn choco_Foundation_NSFastEnumerationProtocol_instance_countByEnumeratingWithState(
         self_: ptr::objc::RawPtr,
         state: *mut NSFastEnumerationState,
-        buffer: *mut ptr::objc::NullableRawPtr,
+        buffer: *mut Option<ptr::objc::RawPtr>,
         len: usize,
     ) -> usize;
 }
@@ -70,7 +70,7 @@ extern "C" {
 #[repr(C)]
 struct NSFastEnumerationState {
     state: usize,
-    items: *mut ptr::objc::NullableRawPtr,
+    items: *mut Option<ptr::objc::RawPtr>,
     mutations: *mut usize,
     extra: [usize; 5],
 }
@@ -93,7 +93,7 @@ where
 {
     enumerable: ptr::objc::RawPtr,
     /// state.items will not always point to this buffer, it can be using storage local to the enumerable.
-    buffer: [ptr::objc::NullableRawPtr; FAST_ENUMERATOR_BUFFER_LEN],
+    buffer: [Option<ptr::objc::RawPtr>; FAST_ENUMERATOR_BUFFER_LEN],
     state: NSFastEnumerationState,
     start_mutations: usize,
     /// next index to read in state.items
@@ -216,19 +216,19 @@ extern "C" {
     fn choco_Foundation_NSURLInterface_class_newWithString(
         class: ptr::objc::ClassPtr,
         urlString: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSURLInterface_class_fileURLWithPath(
         class: ptr::objc::ClassPtr,
         path: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSURLInterface_class_fileURLWithPath_isDirectory(
         class: ptr::objc::ClassPtr,
         path: ptr::objc::RawPtr,
         is_directory: BOOL,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSURLInterface_instance_absoluteString(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait NSURLInterface: NSObjectInterface
@@ -238,7 +238,6 @@ where
     fn new_with_string(string: &impl NSStringInterface) -> Option<Self::Owned> {
         unsafe {
             choco_Foundation_NSURLInterface_class_newWithString(Self::class(), string.as_raw_ptr())
-                .into_opt()
                 .map(|raw| Self::Owned::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
@@ -476,15 +475,15 @@ extern "C" {
     fn choco_Foundation_NSNumberInterface_class_newWithBool(
         class: ptr::objc::ClassPtr,
         value: BOOL,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSNumberInterface_class_newWithInteger(
         class: ptr::objc::ClassPtr,
         value: NSInteger,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSNumberInterface_class_newWithUnsignedInteger(
         class: ptr::objc::ClassPtr,
         value: NSUInteger,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSNumberInterface_instance_boolValue(self_: ptr::objc::RawPtr) -> BOOL;
     fn choco_Foundation_NSNumberInterface_instance_integerValue(
         self_: ptr::objc::RawPtr,
@@ -621,10 +620,10 @@ extern "C" {
     fn choco_Foundation_NSErrorInterface_instance_code(self_: ptr::objc::RawPtr) -> NSInteger;
     fn choco_Foundation_NSErrorInterface_instance_domain(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSErrorInterface_instance_localizedDescription(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait NSErrorInterface: NSObjectInterface
@@ -706,16 +705,14 @@ impl std::fmt::Debug for NSError {
 /// - if non null, raw_ptr must be owned and of type T.
 /// - if non null, raw_unowned_error must not be owned (probably autoreleased) and point to a NSError.
 pub(crate) unsafe fn make_object_result_unchecked<T: NSObjectInterface>(
-    raw_ptr: ptr::objc::NullableRawPtr,
-    raw_unowned_error: ptr::objc::NullableRawPtr,
+    raw_ptr: Option<ptr::objc::RawPtr>,
+    raw_unowned_error: Option<ptr::objc::RawPtr>,
 ) -> Result<T::Owned, NSError> {
     // Create the object before checking the error,
     // because if both the new object and error are not null,
     // we want to the object to be properly released.
-    let obj = raw_ptr
-        .into_opt()
-        .map(|raw_ptr| T::Owned::from_owned_ptr_unchecked(raw_ptr.consider_owned()));
-    match raw_unowned_error.into_opt() {
+    let obj = raw_ptr.map(|raw_ptr| T::Owned::from_owned_ptr_unchecked(raw_ptr.consider_owned()));
+    match raw_unowned_error {
         None => Ok(obj.expect("expecting non null return value pointer when no error")),
         Some(raw_error) => Err(NSError::from_owned_ptr_unchecked(raw_error.retain())),
     }
@@ -725,9 +722,9 @@ pub(crate) unsafe fn make_object_result_unchecked<T: NSObjectInterface>(
 /// - if non null, raw_unowned_error must not be owned (probably autoreleased) and point to a NSError.
 pub(crate) unsafe fn make_value_result_unchecked<T>(
     value: T,
-    raw_unowned_error: ptr::objc::NullableRawPtr,
+    raw_unowned_error: Option<ptr::objc::RawPtr>,
 ) -> Result<T, NSError> {
-    match raw_unowned_error.into_opt() {
+    match raw_unowned_error {
         None => Ok(value),
         Some(raw_error) => Err(NSError::from_owned_ptr_unchecked(raw_error.retain())),
     }

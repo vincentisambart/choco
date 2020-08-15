@@ -35,7 +35,7 @@ pub struct CFTypeID(usize);
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
     fn CFRelease(cf: ptr::cf::RawRef);
-    fn CFRetain(cf: ptr::cf::RawRef) -> ptr::cf::NullableRawRef;
+    fn CFRetain(cf: ptr::cf::RawRef) -> Option<ptr::cf::RawRef>;
     fn CFShow(cf: ptr::cf::RawRef);
     fn CFGetRetainCount(cf: ptr::cf::RawRef) -> CFIndex;
     fn CFHash(cf: ptr::cf::RawRef) -> CFHashCode;

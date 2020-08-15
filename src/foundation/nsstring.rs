@@ -12,7 +12,7 @@ extern "C" {
         bytes: *const std::ffi::c_void,
         len: usize,
         encoding: NSStringEncoding,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 
     fn choco_Foundation_NSStringInterface_instance_UTF8String(
         self_: ptr::objc::RawPtr,

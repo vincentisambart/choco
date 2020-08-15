@@ -42,7 +42,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
         self_: ptr::objc::RawPtr,
         key: ptr::objc::RawPtr,
-        error: *mut ptr::objc::NullableRawPtr,
+        error: *mut Option<ptr::objc::RawPtr>,
     ) -> AVKeyValueStatus;
 
     fn choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_loadValuesAsynchronouslyForKeys_completionHandler(
@@ -58,7 +58,7 @@ pub trait AVAsynchronousKeyValueLoadingProtocol: NSObjectProtocol {
         key: &impl NSStringInterface,
     ) -> Result<AVKeyValueStatus, NSError> {
         let self_raw = self.as_raw_ptr();
-        let mut raw_unowned_error = ptr::objc::NullableRawPtr::default();
+        let mut raw_unowned_error: Option<ptr::objc::RawPtr> = None;
         unsafe {
             let status = choco_AVFoundation_AVAsynchronousKeyValueLoadingProtocol_instance_statusOfValueForKey_error(
                 self_raw,
@@ -97,7 +97,7 @@ extern "C" {
     fn choco_AVFoundation_AVAsset_class() -> ptr::objc::ClassPtr;
     fn choco_AVFoundation_AVAssetInterface_instance_tracks(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVAssetInterface_instance_playable(self_: ptr::objc::RawPtr) -> BOOL;
 }
 
@@ -169,7 +169,7 @@ extern "C" {
         class: ptr::objc::ClassPtr,
         url: ptr::objc::RawPtr,
         options: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait AVURLAssetInterface: AVAssetInterface {
@@ -356,10 +356,10 @@ extern "C" {
     fn choco_AVFoundation_AVAssetTrack_class() -> ptr::objc::ClassPtr;
     fn choco_AVFoundation_AVAssetTrackInterface_instance_mediaType(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVAssetTrackInterface_instance_formatDescriptions(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait AVAssetTrackInterface: NSObjectInterface
@@ -430,13 +430,13 @@ extern "C" {
     fn choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
         class: ptr::objc::ClassPtr,
         asset: ptr::objc::RawPtr,
-        error: *mut ptr::objc::NullableRawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+        error: *mut Option<ptr::objc::RawPtr>,
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait AVAssetReaderInterface: NSObjectInterface {
     fn new_with_asset(asset: &impl AVAssetInterface) -> Result<Self::Owned, NSError> {
-        let mut raw_unowned_error = ptr::objc::NullableRawPtr::default();
+        let mut raw_unowned_error: Option<ptr::objc::RawPtr> = None;
         let raw_ptr = unsafe {
             choco_AVFoundation_AVAssetReaderInterface_class_newWithAsset_error(
                 Self::class(),
@@ -605,14 +605,14 @@ extern "C" {
     fn choco_AVFoundation_AVPlayerItemInterface_class_newWithURL(
         class: ptr::objc::ClassPtr,
         url: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVPlayerItemInterface_class_newWithAsset(
         class: ptr::objc::ClassPtr,
         asset: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVPlayerItemInterface_instance_error(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait AVPlayerItemInterface: NSObjectInterface
@@ -647,7 +647,6 @@ where
         let self_raw = self.as_raw_ptr();
         unsafe {
             choco_AVFoundation_AVPlayerItemInterface_instance_error(self_raw)
-                .into_opt()
                 .map(|raw| NSError::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
@@ -694,20 +693,20 @@ extern "C" {
     fn choco_AVFoundation_AVPlayerInterface_class_newWithURL(
         class: ptr::objc::ClassPtr,
         url: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVPlayerInterface_class_newWithPlayerItem(
         class: ptr::objc::ClassPtr,
         item: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVPlayerInterface_instance_play(self_: ptr::objc::RawPtr);
     fn choco_AVFoundation_AVPlayerInterface_instance_pause(self_: ptr::objc::RawPtr);
     fn choco_AVFoundation_AVPlayerInterface_instance_rate(self_: ptr::objc::RawPtr) -> f32;
     fn choco_AVFoundation_AVPlayerInterface_instance_currentItem(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVPlayerInterface_instance_error(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait AVPlayerInterface: NSObjectInterface {
@@ -739,7 +738,6 @@ pub trait AVPlayerInterface: NSObjectInterface {
         let self_raw = self.as_raw_ptr();
         unsafe {
             choco_AVFoundation_AVPlayerInterface_instance_error(self_raw)
-                .into_opt()
                 .map(|raw| NSError::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
@@ -748,7 +746,6 @@ pub trait AVPlayerInterface: NSObjectInterface {
         let self_raw = self.as_raw_ptr();
         unsafe {
             choco_AVFoundation_AVPlayerInterface_instance_currentItem(self_raw)
-                .into_opt()
                 .map(|raw| AVPlayerItem::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
@@ -808,8 +805,8 @@ extern "C" {
     fn choco_AVFoundation_AVAudioPlayerInterface_class_newWithContentsOfURL_error(
         class: ptr::objc::ClassPtr,
         url: ptr::objc::RawPtr,
-        error: *mut ptr::objc::NullableRawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+        error: *mut Option<ptr::objc::RawPtr>,
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_AVFoundation_AVAudioPlayerInterface_instance_play(self_: ptr::objc::RawPtr) -> BOOL;
     fn choco_AVFoundation_AVAudioPlayerInterface_instance_pause(self_: ptr::objc::RawPtr);
     fn choco_AVFoundation_AVAudioPlayerInterface_instance_stop(self_: ptr::objc::RawPtr);
@@ -818,7 +815,7 @@ extern "C" {
 
 pub trait AVAudioPlayerInterface: NSObjectInterface {
     fn new_with_contents_of_url(url: &impl NSURLInterface) -> Result<Self::Owned, NSError> {
-        let mut raw_unowned_error = ptr::objc::NullableRawPtr::default();
+        let mut raw_unowned_error: Option<ptr::objc::RawPtr> = None;
         let raw_ptr = unsafe {
             choco_AVFoundation_AVAudioPlayerInterface_class_newWithContentsOfURL_error(
                 Self::class(),

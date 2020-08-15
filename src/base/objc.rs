@@ -25,7 +25,7 @@ extern "C" {
     fn choco_base_NSObjectProtocol_instance_hash(self_: ptr::objc::RawPtr) -> NSUInteger;
     fn choco_base_NSObjectProtocol_instance_isEqual(
         self_: ptr::objc::RawPtr,
-        other: ptr::objc::NullableRawPtr,
+        other: Option<ptr::objc::RawPtr>,
     ) -> BOOL;
     fn choco_base_NSObjectProtocol_instance_isKindOfClass(
         self_: ptr::objc::RawPtr,
@@ -33,15 +33,15 @@ extern "C" {
     ) -> BOOL;
     fn choco_base_NSObjectProtocol_instance_description(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_base_NSObjectProtocol_instance_debugDescription(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 
     fn choco_base_NSObject_class() -> ptr::objc::ClassPtr;
     fn choco_base_NSObjectInterface_class_new(
         class: ptr::objc::ClassPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 impl<T> ptr::Retain for T

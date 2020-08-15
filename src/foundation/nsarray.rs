@@ -9,18 +9,18 @@ extern "C" {
     fn choco_Foundation_NSArrayInterface_instance_count(self_: ptr::objc::RawPtr) -> usize;
     fn choco_Foundation_NSArrayInterface_instance_firstObject(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_lastObject(
         self_: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_objectAtIndex(
         self_: ptr::objc::RawPtr,
         index: usize,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_arrayByAddingObject(
         self_: ptr::objc::RawPtr,
         obj: ptr::objc::RawPtr,
-    ) -> ptr::objc::NullableRawPtr;
+    ) -> Option<ptr::objc::RawPtr>;
 }
 
 pub trait NSArrayInterface<T: ValidObjCGeneric>: NSObjectInterface
@@ -31,7 +31,6 @@ where
         let raw_self = self.as_raw_ptr();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_firstObject(raw_self)
-                .into_opt()
                 .map(|raw| T::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
@@ -39,7 +38,6 @@ where
         let raw_self = self.as_raw_ptr();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_lastObject(raw_self)
-                .into_opt()
                 .map(|raw| T::from_owned_ptr_unchecked(raw.consider_owned()))
         }
     }
