@@ -1,5 +1,5 @@
 use super::*;
-use crate::base::ptr;
+use crate::base::ptr::{self, FromOwned};
 
 //-------------------------------------------------------------------
 // NSArray interface
@@ -28,7 +28,7 @@ where
     Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<T>,
 {
     fn first(&self) -> Option<T> {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_firstObject(raw_self)
                 .into_opt()
@@ -36,7 +36,7 @@ where
         }
     }
     fn last(&self) -> Option<T> {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_lastObject(raw_self)
                 .into_opt()
@@ -45,7 +45,7 @@ where
     }
 
     fn object_at(&self, index: usize) -> T {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr =
                 choco_Foundation_NSArrayInterface_instance_objectAtIndex(raw_self, index)
@@ -56,7 +56,7 @@ where
     }
 
     fn count(&self) -> usize {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSArrayInterface_instance_count(raw_self) }
     }
     fn is_empty(&self) -> bool {
@@ -68,8 +68,8 @@ where
     where
         Object: IsKindOf<T>,
     {
-        let raw_self = self.as_raw();
-        let raw_obj = object.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_obj = object.as_raw_ptr();
         unsafe {
             let owned_ptr =
                 choco_Foundation_NSArrayInterface_instance_arrayByAddingObject(raw_self, raw_obj)
@@ -88,13 +88,13 @@ pub struct NSArray<T: ValidObjCGeneric> {
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ValidObjCGeneric> ptr::objc::AsRawPtr for NSArray<T> {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl<T: ValidObjCGeneric> ptr::AsRaw for NSArray<T> {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<T: ValidObjCGeneric> FromOwnedPtr for NSArray<T> {
+impl<T: ValidObjCGeneric> ptr::FromOwned for NSArray<T> {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self {
             ptr,
@@ -170,13 +170,13 @@ pub struct ImmutableNSArray<T: ValidObjCGeneric> {
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ValidObjCGeneric> ptr::objc::AsRawPtr for ImmutableNSArray<T> {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl<T: ValidObjCGeneric> ptr::AsRaw for ImmutableNSArray<T> {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<T: ValidObjCGeneric> FromOwnedPtr for ImmutableNSArray<T> {
+impl<T: ValidObjCGeneric> ptr::FromOwned for ImmutableNSArray<T> {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self {
             ptr,
@@ -228,8 +228,8 @@ pub trait NSMutableArrayInterface<T: ValidObjCGeneric>: NSArrayInterface<T> {
     where
         Value: IsKindOf<T>,
     {
-        let raw_self = self.as_raw();
-        let raw_value = value.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_value = value.as_raw_ptr();
         unsafe { choco_Foundation_NSMutableArrayInterface_instance_addObject(raw_self, raw_value) }
     }
 }
@@ -242,13 +242,13 @@ pub struct NSMutableArray<T: ValidObjCGeneric> {
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ValidObjCGeneric> ptr::objc::AsRawPtr for NSMutableArray<T> {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl<T: ValidObjCGeneric> ptr::AsRaw for NSMutableArray<T> {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<T: ValidObjCGeneric> FromOwnedPtr for NSMutableArray<T> {
+impl<T: ValidObjCGeneric> ptr::FromOwned for NSMutableArray<T> {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self {
             ptr,

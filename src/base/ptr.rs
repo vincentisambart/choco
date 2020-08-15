@@ -3,6 +3,32 @@ pub trait Retain {
     fn retain(&self) -> Self::Owned;
 }
 
+/// At least one of the two methods must be implemented (or else you'll end up with infinite recursion).
+pub trait AsRaw {
+    fn as_raw_ptr(&self) -> objc::RawPtr {
+        objc::RawPtr {
+            ptr: self.as_raw_ref().ptr.cast(),
+        }
+    }
+
+    fn as_raw_ref(&self) -> cf::RawRef {
+        cf::RawRef {
+            ptr: self.as_raw_ptr().ptr.cast(),
+        }
+    }
+}
+
+/// At least one of the two methods must be implemented (or else you'll end up with infinite recursion).
+pub trait FromOwned: Sized {
+    unsafe fn from_owned_ptr_unchecked(owned_ptr: objc::OwnedPtr) -> Self {
+        Self::from_owned_ref_unchecked(owned_ptr.into())
+    }
+
+    unsafe fn from_owned_ref_unchecked(owned_ref: cf::OwnedRef) -> Self {
+        Self::from_owned_ptr_unchecked(owned_ref.into())
+    }
+}
+
 pub(crate) mod objc {
     use std::ptr::NonNull;
 
@@ -62,10 +88,6 @@ pub(crate) mod objc {
         }
     }
 
-    pub trait AsRawPtr {
-        fn as_raw(&self) -> RawPtr;
-    }
-
     pub struct OwnedPtr {
         raw: RawPtr,
     }
@@ -93,19 +115,20 @@ pub(crate) mod objc {
         }
     }
 
-    impl AsRawPtr for OwnedPtr {
-        fn as_raw(&self) -> RawPtr {
+    impl super::AsRaw for OwnedPtr {
+        fn as_raw_ptr(&self) -> RawPtr {
             self.raw
         }
     }
 
     #[derive(Copy, Clone)]
+    #[repr(transparent)]
     pub struct StaticPtr {
         raw: RawPtr,
     }
 
-    impl AsRawPtr for StaticPtr {
-        fn as_raw(&self) -> RawPtr {
+    impl super::AsRaw for StaticPtr {
+        fn as_raw_ptr(&self) -> RawPtr {
             self.raw
         }
     }
@@ -209,6 +232,12 @@ pub(crate) mod cf {
         }
     }
 
+    impl super::AsRaw for OwnedRef {
+        fn as_raw_ref(&self) -> RawRef {
+            self.raw
+        }
+    }
+
     impl super::Retain for OwnedRef {
         type Owned = Self;
         fn retain(&self) -> Self::Owned {
@@ -247,10 +276,18 @@ pub(crate) mod cf {
     }
 }
 
-impl objc::AsRawPtr for cf::OwnedRef {
-    fn as_raw(&self) -> objc::RawPtr {
-        objc::RawPtr {
-            ptr: self.raw.ptr.cast(),
-        }
+impl From<cf::OwnedRef> for objc::OwnedPtr {
+    fn from(ptr: cf::OwnedRef) -> Self {
+        let raw = ptr.as_raw_ptr();
+        std::mem::forget(ptr);
+        unsafe { Self::from_owned_raw(raw) }
+    }
+}
+
+impl From<objc::OwnedPtr> for cf::OwnedRef {
+    fn from(ptr: objc::OwnedPtr) -> Self {
+        let raw = ptr.as_raw_ref();
+        std::mem::forget(ptr);
+        unsafe { Self::from_owned_raw(raw) }
     }
 }

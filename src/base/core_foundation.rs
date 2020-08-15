@@ -45,37 +45,33 @@ extern "C" {
 
 pub trait CFTypeInterface
 where
-    // to be able to have default implementations of methods returning Self
+    Self: ptr::AsRaw,
     Self: Sized,
-    // all objects should be clonable (here cloning just means increasing the reference count)
-    Self: Clone,
 {
-    fn as_raw(&self) -> ptr::cf::RawRef;
-
     fn equal(&self, other: &impl CFTypeInterface) -> bool {
-        let self_raw = self.as_raw();
-        let other_raw = other.as_raw();
+        let self_raw = self.as_raw_ref();
+        let other_raw = other.as_raw_ref();
         let ret = unsafe { CFEqual(self_raw, other_raw) };
         ret.into()
     }
 
     fn show(&self) {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CFShow(self_raw) };
     }
 
     fn retain_count(&self) -> isize {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CFGetRetainCount(self_raw) }
     }
 
     fn hash(&self) -> usize {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CFHash(self_raw) }
     }
 
     fn type_id(&self) -> CFTypeID {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CFGetTypeID(self_raw) }
     }
 }

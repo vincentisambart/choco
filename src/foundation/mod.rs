@@ -1,6 +1,5 @@
 use crate::base::objc::*;
-use crate::base::ptr;
-use ptr::{objc::AsRawPtr, Retain};
+use crate::base::ptr::{self, AsRaw, FromOwned, Retain};
 
 mod nsarray;
 mod nsdictionary;
@@ -24,10 +23,10 @@ extern "C" {
 }
 
 pub trait NSCopyingProtocol: NSObjectInterface {
-    type Immutable: FromOwnedPtr;
+    type Immutable: ptr::FromOwned;
 
     fn copy(&self) -> Self::Immutable {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr = choco_Foundation_NSCopyingProtocol_copy(raw_self)
                 .unwrap()
@@ -38,10 +37,10 @@ pub trait NSCopyingProtocol: NSObjectInterface {
 }
 
 pub trait NSMutableCopyingProtocol: NSObjectInterface {
-    type Mutable: FromOwnedPtr;
+    type Mutable: ptr::FromOwned;
 
     fn mutable_copy(&self) -> Self::Mutable {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr = choco_Foundation_NSMutableCopyingProtocol_mutableCopy(raw_self)
                 .unwrap()
@@ -90,7 +89,7 @@ impl NSFastEnumerationState {
 const FAST_ENUMERATOR_BUFFER_LEN: usize = 16;
 pub struct NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: FromOwnedPtr,
+    Item: ptr::FromOwned,
 {
     enumerable: ptr::objc::RawPtr,
     /// state.items will not always point to this buffer, it can be using storage local to the enumerable.
@@ -106,14 +105,14 @@ where
 
 impl<'enumerable, Item> NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: FromOwnedPtr,
+    Item: ptr::FromOwned,
 {
     fn new<Enumerable>(enumerable: &'enumerable Enumerable) -> Self
     where
         Enumerable: NSFastEnumerationProtocol<Item>,
     {
         Self {
-            enumerable: enumerable.as_raw(),
+            enumerable: enumerable.as_raw_ptr(),
             buffer: [Default::default(); FAST_ENUMERATOR_BUFFER_LEN],
             state: NSFastEnumerationState::new(),
             start_mutations: 0,
@@ -126,7 +125,7 @@ where
 
 impl<'enumerable, Item> Iterator for NSFastEnumerationIter<'enumerable, Item>
 where
-    Item: FromOwnedPtr,
+    Item: ptr::FromOwned,
 {
     type Item = Item;
 
@@ -169,7 +168,7 @@ where
 
 pub trait NSFastEnumerationProtocol<Item>: NSObjectInterface
 where
-    Item: FromOwnedPtr,
+    Item: ptr::FromOwned,
 {
     fn iter(&'_ self) -> NSFastEnumerationIter<'_, Item> {
         NSFastEnumerationIter::new(self)
@@ -238,7 +237,7 @@ where
 {
     fn new_with_string(string: &impl NSStringInterface) -> Option<Self::Owned> {
         unsafe {
-            choco_Foundation_NSURLInterface_class_newWithString(Self::class(), string.as_raw())
+            choco_Foundation_NSURLInterface_class_newWithString(Self::class(), string.as_raw_ptr())
                 .into_opt()
                 .map(|raw| Self::Owned::from_owned_ptr_unchecked(raw.consider_owned()))
         }
@@ -248,10 +247,12 @@ where
     // file_url_with_path() checks on the disk if the path is a directory (if it does not exist, it's not considered a directory).
     fn file_url_with_path(path: &impl NSStringInterface) -> Self::Owned {
         unsafe {
-            let owned_ptr =
-                choco_Foundation_NSURLInterface_class_fileURLWithPath(Self::class(), path.as_raw())
-                    .unwrap()
-                    .consider_owned();
+            let owned_ptr = choco_Foundation_NSURLInterface_class_fileURLWithPath(
+                Self::class(),
+                path.as_raw_ptr(),
+            )
+            .unwrap()
+            .consider_owned();
             Self::Owned::from_owned_ptr_unchecked(owned_ptr)
         }
     }
@@ -263,7 +264,7 @@ where
         unsafe {
             let owned_ptr = choco_Foundation_NSURLInterface_class_fileURLWithPath_isDirectory(
                 Self::class(),
-                path.as_raw(),
+                path.as_raw_ptr(),
                 is_directory.into(),
             )
             // In fact if the path is empty you will get a nil, but the documentation says you should not pass an empty path.
@@ -274,7 +275,7 @@ where
     }
 
     fn absolute_string(&self) -> NSString {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr = choco_Foundation_NSURLInterface_instance_absoluteString(raw_self)
                 .unwrap()
@@ -288,13 +289,13 @@ pub struct NSURL {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSURL {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSURL {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSURL {
+impl ptr::FromOwned for NSURL {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }
@@ -382,25 +383,25 @@ where
     Self: NSCopyingProtocol,
 {
     fn since_now(&self) -> NSTimeInterval {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(raw_self) }
     }
 
     fn since_reference_date(&self) -> NSTimeInterval {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(raw_self)
         }
     }
 
     fn since_1970(&self) -> NSTimeInterval {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(raw_self) }
     }
 
     fn since(&self, another_date: &NSDate) -> NSTimeInterval {
-        let raw_self = self.as_raw();
-        let raw_another_date = another_date.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_another_date = another_date.as_raw_ptr();
         unsafe {
             choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(
                 raw_self,
@@ -414,13 +415,13 @@ pub struct NSDate {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSDate {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSDate {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSDate {
+impl ptr::FromOwned for NSDate {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }
@@ -527,17 +528,17 @@ pub trait NSNumberInterface: NSValueInterface {
     }
 
     fn as_bool(&self) -> bool {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSNumberInterface_instance_boolValue(raw_self) }.into()
     }
 
     fn as_isize(&self) -> isize {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSNumberInterface_instance_integerValue(raw_self) }
     }
 
     fn as_usize(&self) -> usize {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSNumberInterface_instance_unsignedIntegerValue(raw_self) }
     }
 }
@@ -546,13 +547,13 @@ pub struct NSNumber {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSNumber {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSNumber {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSNumber {
+impl ptr::FromOwned for NSNumber {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }
@@ -631,12 +632,12 @@ where
     Self: NSCopyingProtocol,
 {
     fn code(&self) -> NSInteger {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSErrorInterface_instance_code(raw_self) }
     }
 
     fn domain(&self) -> NSString {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr = choco_Foundation_NSErrorInterface_instance_domain(raw_self)
                 .unwrap()
@@ -646,7 +647,7 @@ where
     }
 
     fn localized_description(&self) -> NSString {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe {
             let owned_ptr =
                 choco_Foundation_NSErrorInterface_instance_localizedDescription(raw_self)
@@ -661,13 +662,13 @@ pub struct NSError {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSError {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSError {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSError {
+impl ptr::FromOwned for NSError {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }

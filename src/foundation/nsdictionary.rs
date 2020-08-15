@@ -20,7 +20,7 @@ where
     Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<K>,
 {
     fn count(&self) -> usize {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSDictionaryInterface_instance_count(raw_self) }
     }
     fn is_empty(&self) -> bool {
@@ -31,8 +31,8 @@ where
     where
         Key: IsKindOf<K>,
     {
-        let raw_self = self.as_raw();
-        let raw_key = key.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_key = key.as_raw_ptr();
         unsafe {
             choco_Foundation_NSDictionaryInterface_instance_objectForKey(raw_self, raw_key)
                 .into_opt()
@@ -54,17 +54,17 @@ where
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K, V> ptr::objc::AsRawPtr for NSDictionary<K, V>
+impl<K, V> ptr::AsRaw for NSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<K, V> FromOwnedPtr for NSDictionary<K, V>
+impl<K, V> ptr::FromOwned for NSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
@@ -147,17 +147,17 @@ where
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K, V> ptr::objc::AsRawPtr for ImmutableNSDictionary<K, V>
+impl<K, V> ptr::AsRaw for ImmutableNSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<K, V> FromOwnedPtr for ImmutableNSDictionary<K, V>
+impl<K, V> ptr::FromOwned for ImmutableNSDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
@@ -261,9 +261,9 @@ where
         Key: IsKindOf<K>,
         Value: IsKindOf<V>,
     {
-        let raw_self = self.as_raw();
-        let raw_key = key.as_raw();
-        let raw_value = value.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_key = key.as_raw_ptr();
+        let raw_value = value.as_raw_ptr();
         unsafe {
             choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
                 raw_self, raw_value, raw_key,
@@ -275,8 +275,8 @@ where
     where
         Key: IsKindOf<K>,
     {
-        let raw_self = self.as_raw();
-        let raw_key = key.as_raw();
+        let raw_self = self.as_raw_ptr();
+        let raw_key = key.as_raw_ptr();
         unsafe {
             choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
                 raw_self, raw_key,
@@ -285,7 +285,7 @@ where
     }
 
     fn remove_all(&self) {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(raw_self) }
     }
 }
@@ -300,17 +300,17 @@ where
     _marker_v: std::marker::PhantomData<V>,
 }
 
-impl<K, V> ptr::objc::AsRawPtr for NSMutableDictionary<K, V>
+impl<K, V> ptr::AsRaw for NSMutableDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,
 {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl<K, V> FromOwnedPtr for NSMutableDictionary<K, V>
+impl<K, V> ptr::FromOwned for NSMutableDictionary<K, V>
 where
     K: ValidObjCGeneric + NSCopyingProtocol,
     V: ValidObjCGeneric,

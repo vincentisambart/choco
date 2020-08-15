@@ -1,5 +1,5 @@
 use super::*;
-use crate::base::ptr;
+use crate::base::ptr::{self, FromOwned};
 
 //-------------------------------------------------------------------
 // NSString interface
@@ -62,7 +62,7 @@ where
     Self: NSCopyingProtocol + NSMutableCopyingProtocol,
 {
     fn to_string(&self) -> Result<String, std::str::Utf8Error> {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         let cstr = unsafe {
             let bytes = choco_Foundation_NSStringInterface_instance_UTF8String(raw_self);
             std::ffi::CStr::from_ptr(bytes)
@@ -71,7 +71,7 @@ where
     }
 
     fn to_string_lossy(&self) -> String {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         let cstr = unsafe {
             let bytes = choco_Foundation_NSStringInterface_instance_UTF8String(raw_self);
             std::ffi::CStr::from_ptr(bytes)
@@ -80,12 +80,12 @@ where
     }
 
     fn char_at(&self, index: usize) -> u16 {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSStringInterface_instance_characterAtIndex(raw_self, index) }
     }
 
     fn len(&self) -> usize {
-        let raw_self = self.as_raw();
+        let raw_self = self.as_raw_ptr();
         unsafe { choco_Foundation_NSStringInterface_instance_length(raw_self) }
     }
 
@@ -94,8 +94,8 @@ where
     }
 
     fn is_equal_to_string(&self, obj: &impl NSStringInterface) -> bool {
-        let self_raw = self.as_raw();
-        let obj_raw = obj.as_raw();
+        let self_raw = self.as_raw_ptr();
+        let obj_raw = obj.as_raw_ptr();
         let ret = unsafe {
             choco_Foundation_NSStringInterface_instance_isEqualToString(self_raw, obj_raw)
         };
@@ -127,13 +127,13 @@ pub struct NSString {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSString {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSString {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSString {
+impl ptr::FromOwned for NSString {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }
@@ -202,13 +202,13 @@ pub struct ImmutableNSString {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for ImmutableNSString {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for ImmutableNSString {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for ImmutableNSString {
+impl ptr::FromOwned for ImmutableNSString {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }
@@ -261,9 +261,9 @@ impl StaticNSString {
     }
 }
 
-impl ptr::objc::AsRawPtr for StaticNSString {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for StaticNSString {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
@@ -312,13 +312,13 @@ pub struct NSMutableString {
     ptr: ptr::objc::OwnedPtr,
 }
 
-impl ptr::objc::AsRawPtr for NSMutableString {
-    fn as_raw(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw()
+impl ptr::AsRaw for NSMutableString {
+    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
+        self.ptr.as_raw_ptr()
     }
 }
 
-impl FromOwnedPtr for NSMutableString {
+impl ptr::FromOwned for NSMutableString {
     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
         Self { ptr }
     }

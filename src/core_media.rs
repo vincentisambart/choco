@@ -147,7 +147,7 @@ pub trait CMFormatDescriptionInterface: CFTypeInterface {
     }
 
     fn media_type(&self) -> CMMediaType {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CMFormatDescriptionGetMediaType(self_raw) }
     }
 }
@@ -156,6 +156,13 @@ pub struct CMFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMFormatDescription {}
 impl CMFormatDescriptionInterface for CMFormatDescription {}
 pub trait CMAudioFormatDescriptionInterface: CMFormatDescriptionInterface {}
 impl ValidObjCGeneric for CMFormatDescription {}
@@ -164,6 +171,19 @@ pub struct CMAudioFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMAudioFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl ptr::FromOwned for CMFormatDescription {
+    unsafe fn from_owned_ref_unchecked(owned_ref: ptr::cf::OwnedRef) -> Self {
+        Self { ptr: owned_ref }
+    }
+}
+
+impl CFTypeInterface for CMAudioFormatDescription {}
 impl CMFormatDescriptionInterface for CMAudioFormatDescription {}
 impl CMAudioFormatDescriptionInterface for CMAudioFormatDescription {}
 
@@ -176,12 +196,12 @@ pub struct CMVideoDimensions {
 
 pub trait CMVideoFormatDescriptionInterface: CMFormatDescriptionInterface {
     fn clean_aperture(&self, origin_is_at_top_left: bool) -> CGRect {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CMVideoFormatDescriptionGetCleanAperture(self_raw, origin_is_at_top_left.into()) }
     }
 
     fn dimensions(&self) -> CMVideoDimensions {
-        let self_raw = self.as_raw();
+        let self_raw = self.as_raw_ref();
         unsafe { CMVideoFormatDescriptionGetDimensions(self_raw) }
     }
 }
@@ -190,6 +210,13 @@ pub struct CMVideoFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMVideoFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMVideoFormatDescription {}
 impl CMFormatDescriptionInterface for CMVideoFormatDescription {}
 impl CMVideoFormatDescriptionInterface for CMVideoFormatDescription {}
 
@@ -199,6 +226,13 @@ pub struct CMMuxedFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMMuxedFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMMuxedFormatDescription {}
 impl CMFormatDescriptionInterface for CMMuxedFormatDescription {}
 impl CMMuxedFormatDescriptionInterface for CMMuxedFormatDescription {}
 
@@ -208,6 +242,13 @@ pub struct CMMetadataFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMMetadataFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMMetadataFormatDescription {}
 impl CMFormatDescriptionInterface for CMMetadataFormatDescription {}
 impl CMMetadataFormatDescriptionInterface for CMMetadataFormatDescription {}
 
@@ -217,6 +258,13 @@ pub struct CMTextFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMTextFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMTextFormatDescription {}
 impl CMFormatDescriptionInterface for CMTextFormatDescription {}
 impl CMTextFormatDescriptionInterface for CMTextFormatDescription {}
 
@@ -226,6 +274,13 @@ pub struct CMTimeCodeFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMTimeCodeFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMTimeCodeFormatDescription {}
 impl CMFormatDescriptionInterface for CMTimeCodeFormatDescription {}
 impl CMTimeCodeFormatDescriptionInterface for CMTimeCodeFormatDescription {}
 
@@ -235,5 +290,12 @@ pub struct CMClosedCaptionFormatDescription {
     ptr: ptr::cf::OwnedRef,
 }
 
+impl ptr::AsRaw for CMClosedCaptionFormatDescription {
+    fn as_raw_ref(&self) -> ptr::cf::RawRef {
+        self.ptr.as_raw_ref()
+    }
+}
+
+impl CFTypeInterface for CMClosedCaptionFormatDescription {}
 impl CMFormatDescriptionInterface for CMClosedCaptionFormatDescription {}
 impl CMClosedCaptionFormatDescriptionInterface for CMClosedCaptionFormatDescription {}
