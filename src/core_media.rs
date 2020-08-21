@@ -1,8 +1,7 @@
 use crate::base::core_foundation::*;
 use crate::base::objc::*;
-use crate::base::ptr;
+use crate::base::{fourcc_unchecked, ptr};
 use crate::core_graphics::CGRect;
-use choco_macro::fourcc;
 
 pub(crate) mod prelude {
     pub use super::CMAudioFormatDescriptionInterface;
@@ -101,14 +100,14 @@ extern "C" {
 pub struct CMMediaType(pub u32);
 
 impl CMMediaType {
-    pub const AUDIO: Self = Self(fourcc!("soun"));
-    pub const VIDEO: Self = Self(fourcc!("vide"));
-    pub const MUXED: Self = Self(fourcc!("muxx"));
-    pub const METADATA: Self = Self(fourcc!("meta"));
-    pub const TEXT: Self = Self(fourcc!("text"));
-    pub const TIME_CODE: Self = Self(fourcc!("tmcd"));
-    pub const CLOSED_CAPTION: Self = Self(fourcc!("clcp"));
-    pub const SUBTITLE: Self = Self(fourcc!("sbtl"));
+    pub const AUDIO: Self = Self(fourcc_unchecked("soun"));
+    pub const VIDEO: Self = Self(fourcc_unchecked("vide"));
+    pub const MUXED: Self = Self(fourcc_unchecked("muxx"));
+    pub const METADATA: Self = Self(fourcc_unchecked("meta"));
+    pub const TEXT: Self = Self(fourcc_unchecked("text"));
+    pub const TIME_CODE: Self = Self(fourcc_unchecked("tmcd"));
+    pub const CLOSED_CAPTION: Self = Self(fourcc_unchecked("clcp"));
+    pub const SUBTITLE: Self = Self(fourcc_unchecked("sbtl"));
 }
 
 pub enum TypedCMFormatDescription {
