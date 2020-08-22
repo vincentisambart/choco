@@ -1,4 +1,4 @@
-use crate::base::ptr::{self, FromOwned};
+use crate::base::ptr;
 use std::ptr::NonNull;
 
 pub type NSInteger = isize;
@@ -22,136 +22,110 @@ impl From<bool> for BOOL {
 
 // TODO: Move NSObject to foundation, even though technically it's part of the runtime.
 extern "C" {
-    fn choco_base_NSObjectProtocol_instance_hash(self_: ptr::objc::RawPtr) -> NSUInteger;
+    fn choco_base_NSObjectProtocol_instance_hash(self_: ptr::RawPtr) -> NSUInteger;
     fn choco_base_NSObjectProtocol_instance_isEqual(
-        self_: ptr::objc::RawPtr,
-        other: Option<ptr::objc::RawPtr>,
+        self_: ptr::RawPtr,
+        other: Option<ptr::RawPtr>,
     ) -> BOOL;
     fn choco_base_NSObjectProtocol_instance_isKindOfClass(
-        self_: ptr::objc::RawPtr,
-        class: ptr::objc::ClassPtr,
+        self_: ptr::RawPtr,
+        class: ptr::ClassPtr,
     ) -> BOOL;
-    fn choco_base_NSObjectProtocol_instance_description(
-        self_: ptr::objc::RawPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+    fn choco_base_NSObjectProtocol_instance_description(self_: ptr::RawPtr) -> Option<ptr::RawPtr>;
     fn choco_base_NSObjectProtocol_instance_debugDescription(
-        self_: ptr::objc::RawPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+        self_: ptr::RawPtr,
+    ) -> Option<ptr::RawPtr>;
 
-    fn choco_base_NSObject_class() -> ptr::objc::ClassPtr;
-    fn choco_base_NSObjectInterface_class_new(
-        class: ptr::objc::ClassPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+    fn choco_base_NSObject_class() -> ptr::ClassPtr;
+    fn choco_base_NSObjectInterface_class_new(class: ptr::ClassPtr) -> Option<ptr::RawPtr>;
 }
-
-impl<T> ptr::Retain for T
-where
-    T: ptr::AsRaw + ptr::FromOwned,
-{
-    type Owned = Self;
-
-    fn retain(&self) -> Self::Owned {
-        // We are sure the source and destination type are the same so that should be safe.
-        unsafe { Self::from_owned_ptr_unchecked(self.as_raw_ptr().retain()) }
-    }
-}
-
-/// Indicates that the type can be used as type parameter for Objective-C classes like NSArray.
-/// That does not include special types like StaticNSString or ImmutableNSString.
-pub trait ValidObjCGeneric: ptr::AsRaw + ptr::FromOwned {}
 
 /// Marker trait used for handling of type parameters in NSArray and NSDictionary.
-pub unsafe trait IsKindOf<T: ValidObjCGeneric>: ptr::AsRaw {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<T> for T {}
+pub unsafe trait IsKindOf<T: ptr::Type>: ptr::Type {}
+unsafe impl<T: ptr::Type> IsKindOf<T> for T {}
 
 pub trait NSObjectProtocol
 where
     Self: ptr::AsRaw,
     Self: Sized,
 {
-    type Owned: ptr::FromOwned;
-
-    /// Objective-C class represented by the struct implementing this trait..
-    fn class() -> ptr::objc::ClassPtr;
+    type Class: ptr::ObjCClass;
 
     fn hash(&self) -> usize {
-        unsafe { choco_base_NSObjectProtocol_instance_hash(self.as_raw_ptr()) }
+        unsafe { choco_base_NSObjectProtocol_instance_hash(self.as_raw()) }
     }
+
     // In Objective-C, the parameter to -[NSObject isEqual:] is nullable,
     // we consider it non-nullable to makes things simpler.
     fn is_equal(&self, obj: &impl NSObjectProtocol) -> bool {
-        let self_raw = self.as_raw_ptr();
-        let obj_raw = obj.as_raw_ptr();
+        let self_raw = self.as_raw();
+        let obj_raw = obj.as_raw();
         let ret = unsafe { choco_base_NSObjectProtocol_instance_isEqual(self_raw, obj_raw.into()) };
         ret.into()
     }
 
-    fn is_kind_of(&self, class: ptr::objc::ClassPtr) -> bool {
-        let self_raw = self.as_raw_ptr();
+    fn is_kind_of(&self, class: ptr::ClassPtr) -> bool {
+        let self_raw = self.as_raw();
         let ret = unsafe { choco_base_NSObjectProtocol_instance_isKindOfClass(self_raw, class) };
         ret.into()
     }
 
-    fn description(&self) -> crate::foundation::NSString {
-        let self_raw = self.as_raw_ptr();
+    fn description(&self) -> ptr::OwnedPtr<crate::foundation::NSString> {
+        let self_raw = self.as_raw();
         unsafe {
-            let owned_ptr = choco_base_NSObjectProtocol_instance_description(self_raw)
-                .unwrap()
-                .consider_owned();
-            crate::foundation::NSString::from_owned_ptr_unchecked(owned_ptr)
+            let raw = choco_base_NSObjectProtocol_instance_description(self_raw).unwrap();
+            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
         }
     }
 
-    fn debug_description(&self) -> crate::foundation::NSString {
-        let self_raw = self.as_raw_ptr();
+    fn debug_description(&self) -> ptr::OwnedPtr<crate::foundation::NSString> {
+        let self_raw = self.as_raw();
         unsafe {
-            let owned_ptr = choco_base_NSObjectProtocol_instance_debugDescription(self_raw)
-                .unwrap()
-                .consider_owned();
-            crate::foundation::NSString::from_owned_ptr_unchecked(owned_ptr)
+            let raw = choco_base_NSObjectProtocol_instance_debugDescription(self_raw).unwrap();
+            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
         }
     }
 }
 
-pub trait NSObjectInterface: NSObjectProtocol {
-    fn new() -> Self::Owned {
+pub trait NSObjectInterface: NSObjectProtocol {}
+
+pub trait NSObjectInterfaceClassMethods: ptr::ObjCClass
+where
+    Self: Sized,
+{
+    fn new() -> ptr::OwnedPtr<Self> {
         unsafe {
-            let owned_ptr = choco_base_NSObjectInterface_class_new(Self::class())
-                .unwrap()
-                .consider_owned();
-            Self::Owned::from_owned_ptr_unchecked(owned_ptr)
+            let raw =
+                choco_base_NSObjectInterface_class_new(<Self as ptr::ObjCClass>::class()).unwrap();
+            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
         }
     }
 }
 
-pub struct NSObject {
-    ptr: ptr::objc::OwnedPtr,
+pub struct NSObject {}
+
+impl ptr::Type for NSObject {
+    const KIND: ptr::TypeKind = ptr::TypeKind::ObjC;
 }
 
-impl ptr::AsRaw for NSObject {
-    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw_ptr()
-    }
-}
-
-impl ptr::FromOwned for NSObject {
-    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-        Self { ptr }
-    }
-}
-
-impl NSObjectProtocol for NSObject {
-    type Owned = Self;
-
-    fn class() -> ptr::objc::ClassPtr {
+impl ptr::ObjCClass for NSObject {
+    fn class() -> ptr::ClassPtr {
         unsafe { choco_base_NSObject_class() }
     }
 }
 
-impl NSObjectInterface for NSObject {}
-impl ValidObjCGeneric for NSObject {}
+impl NSObjectInterfaceClassMethods for NSObject {}
 
-impl<Rhs: NSObjectInterface> std::cmp::PartialEq<Rhs> for NSObject {
+impl NSObjectProtocol for ptr::OwnedPtr<NSObject> {
+    type Class = NSObject;
+}
+impl NSObjectInterface for ptr::OwnedPtr<NSObject> {}
+
+impl<LhsClass: ptr::ObjCClass, Rhs: NSObjectInterface> std::cmp::PartialEq<Rhs>
+    for ptr::OwnedPtr<LhsClass>
+where
+    ptr::OwnedPtr<LhsClass>: NSObjectProtocol,
+{
     fn eq(&self, other: &Rhs) -> bool {
         self.is_equal(other)
     }
@@ -176,8 +150,6 @@ mod tests {
 
     #[test]
     fn retain() {
-        use ptr::Retain;
-
         let obj1 = NSObject::new();
         let obj2 = obj1.retain();
         assert!(obj1.is_equal(&obj2));

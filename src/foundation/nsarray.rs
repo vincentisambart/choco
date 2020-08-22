@@ -1,60 +1,61 @@
 use super::*;
-use crate::base::ptr::{self, FromOwned};
+use crate::base::{objc, ptr};
+use objc::{IsKindOf, NSObjectInterface, NSObjectInterfaceClassMethods, NSObjectProtocol};
+use ptr::{AsRaw, ObjCClass};
 
 //-------------------------------------------------------------------
 // NSArray interface
 
 extern "C" {
-    fn choco_Foundation_NSArray_class() -> ptr::objc::ClassPtr;
-    fn choco_Foundation_NSArrayInterface_instance_count(self_: ptr::objc::RawPtr) -> usize;
+    fn choco_Foundation_NSArray_class() -> ptr::ClassPtr;
+    fn choco_Foundation_NSArrayInterface_instance_count(self_: ptr::RawPtr) -> usize;
     fn choco_Foundation_NSArrayInterface_instance_firstObject(
-        self_: ptr::objc::RawPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+        self_: ptr::RawPtr,
+    ) -> Option<ptr::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_lastObject(
-        self_: ptr::objc::RawPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+        self_: ptr::RawPtr,
+    ) -> Option<ptr::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_objectAtIndex(
-        self_: ptr::objc::RawPtr,
+        self_: ptr::RawPtr,
         index: usize,
-    ) -> Option<ptr::objc::RawPtr>;
+    ) -> Option<ptr::RawPtr>;
     fn choco_Foundation_NSArrayInterface_instance_arrayByAddingObject(
-        self_: ptr::objc::RawPtr,
-        obj: ptr::objc::RawPtr,
-    ) -> Option<ptr::objc::RawPtr>;
+        self_: ptr::RawPtr,
+        obj: ptr::RawPtr,
+    ) -> Option<ptr::RawPtr>;
 }
 
-pub trait NSArrayInterface<T: ValidObjCGeneric>: NSObjectInterface
+pub trait NSArrayInterface<T: ptr::Type>: crate::base::objc::NSObjectInterface
 where
-    Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<T>,
+    // Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<T>,
+    Self: NSFastEnumerationProtocol<T>,
 {
-    fn first(&self) -> Option<T> {
-        let raw_self = self.as_raw_ptr();
+    fn first(&self) -> Option<ptr::OwnedPtr<T>> {
+        let raw_self = self.as_raw();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_firstObject(raw_self)
-                .map(|raw| T::from_owned_ptr_unchecked(raw.consider_owned()))
+                .map(|raw| ptr::OwnedPtr::from_owned_raw_unchecked(raw))
         }
     }
-    fn last(&self) -> Option<T> {
-        let raw_self = self.as_raw_ptr();
+    fn last(&self) -> Option<ptr::OwnedPtr<T>> {
+        let raw_self = self.as_raw();
         unsafe {
             choco_Foundation_NSArrayInterface_instance_lastObject(raw_self)
-                .map(|raw| T::from_owned_ptr_unchecked(raw.consider_owned()))
+                .map(|raw| ptr::OwnedPtr::from_owned_raw_unchecked(raw))
         }
     }
 
-    fn object_at(&self, index: usize) -> T {
-        let raw_self = self.as_raw_ptr();
+    fn object_at(&self, index: usize) -> ptr::OwnedPtr<T> {
+        let raw_self = self.as_raw();
         unsafe {
-            let owned_ptr =
-                choco_Foundation_NSArrayInterface_instance_objectAtIndex(raw_self, index)
-                    .unwrap()
-                    .consider_owned();
-            T::from_owned_ptr_unchecked(owned_ptr)
+            let raw =
+                choco_Foundation_NSArrayInterface_instance_objectAtIndex(raw_self, index).unwrap();
+            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
         }
     }
 
     fn count(&self) -> usize {
-        let raw_self = self.as_raw_ptr();
+        let raw_self = self.as_raw();
         unsafe { choco_Foundation_NSArrayInterface_instance_count(raw_self) }
     }
     fn is_empty(&self) -> bool {
@@ -62,18 +63,18 @@ where
     }
 
     #[must_use]
-    fn adding_object<Object>(&self, object: &Object) -> NSArray<T>
+    fn adding_object<Object, Ptr>(&self, object: &Ptr) -> ptr::OwnedPtr<NSArray<T>>
     where
         Object: IsKindOf<T>,
+        Ptr: ptr::PtrHolder<Object>,
     {
-        let raw_self = self.as_raw_ptr();
-        let raw_obj = object.as_raw_ptr();
+        let raw_self = self.as_raw();
+        let raw_obj = object.as_raw();
         unsafe {
-            let owned_ptr =
+            let raw =
                 choco_Foundation_NSArrayInterface_instance_arrayByAddingObject(raw_self, raw_obj)
-                    .unwrap()
-                    .consider_owned();
-            NSArray::from_owned_ptr_unchecked(owned_ptr)
+                    .unwrap();
+            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
         }
     }
 }
@@ -81,48 +82,39 @@ where
 //-------------------------------------------------------------------
 // NSArray
 
-pub struct NSArray<T: ValidObjCGeneric> {
-    ptr: ptr::objc::OwnedPtr,
+pub struct NSArray<T: ptr::Type> {
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ValidObjCGeneric> ptr::AsRaw for NSArray<T> {
-    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw_ptr()
-    }
+impl<T> ptr::Type for NSArray<T>
+where
+    T: ptr::Type,
+{
+    const KIND: ptr::TypeKind = ptr::TypeKind::ObjC;
 }
 
-impl<T: ValidObjCGeneric> ptr::FromOwned for NSArray<T> {
-    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-        Self {
-            ptr,
-            _marker: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<T: ValidObjCGeneric> NSObjectProtocol for NSArray<T> {
-    type Owned = Self;
-
-    fn class() -> ptr::objc::ClassPtr {
+impl<T> ObjCClass for NSArray<T>
+where
+    T: ptr::Type,
+{
+    fn class() -> ptr::ClassPtr {
         unsafe { choco_Foundation_NSArray_class() }
     }
 }
 
-impl<T: ValidObjCGeneric> NSObjectInterface for NSArray<T> {}
-impl<T: ValidObjCGeneric> NSArrayInterface<T> for NSArray<T> {}
+impl<T> NSObjectInterfaceClassMethods for NSArray<T> where T: ptr::Type {}
 
-impl<T: ValidObjCGeneric> NSCopyingProtocol for NSArray<T> {
-    type Immutable = ImmutableNSArray<T>;
+impl<T> NSObjectProtocol for ptr::OwnedPtr<NSArray<T>>
+where
+    T: ptr::Type,
+{
+    type Class = NSArray<T>;
 }
+impl<T> NSObjectInterface for ptr::OwnedPtr<NSArray<T>> where T: ptr::Type {}
+impl<T> NSArrayInterface<T> for ptr::OwnedPtr<NSArray<T>> where T: ptr::Type {}
+impl<T> NSFastEnumerationProtocol<T> for ptr::OwnedPtr<NSArray<T>> where T: ptr::Type {}
 
-impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSArray<T> {
-    type Mutable = NSMutableArray<T>;
-}
-
-impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSArray<T> {}
-impl<T: ValidObjCGeneric> ValidObjCGeneric for NSArray<T> {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSArray<T> {}
+unsafe impl<T> IsKindOf<objc::NSObject> for NSArray<T> where T: ptr::Type {}
 
 #[cfg(test)]
 mod array_tests {
@@ -130,8 +122,8 @@ mod array_tests {
 
     #[test]
     fn empty_arrays() {
-        let array1: NSArray<NSObject> = NSArray::new();
-        let array2: NSArray<NSObject> = NSArray::new();
+        let array1: ptr::OwnedPtr<NSArray<objc::NSObject>> = NSArray::new();
+        let array2: ptr::OwnedPtr<NSArray<objc::NSObject>> = NSArray::new();
         assert!(array1.is_equal(&array1));
         assert!(array1.is_equal(&array2));
         assert_eq!(array1.count(), 0);
@@ -142,9 +134,9 @@ mod array_tests {
 
     #[test]
     fn adding() {
-        let array1: NSArray<NSObject> = NSArray::new();
-        let array2: NSArray<NSObject> = NSArray::new();
-        let obj1 = NSObject::new();
+        let array1: ptr::OwnedPtr<NSArray<objc::NSObject>> = NSArray::new();
+        let array2: ptr::OwnedPtr<NSArray<objc::NSObject>> = NSArray::new();
+        let obj1 = objc::NSObject::new();
         let str1 = NSString::new();
         let array1 = array1.adding_object(&obj1);
         let array2 = array2.adding_object(&obj1);
@@ -160,74 +152,24 @@ mod array_tests {
 }
 
 //-------------------------------------------------------------------
-// ImmutableNSArray
-
-/// Version of NSArray we are statically sure to be immutable.
-pub struct ImmutableNSArray<T: ValidObjCGeneric> {
-    ptr: ptr::objc::OwnedPtr,
-    _marker: std::marker::PhantomData<T>,
-}
-
-impl<T: ValidObjCGeneric> ptr::AsRaw for ImmutableNSArray<T> {
-    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw_ptr()
-    }
-}
-
-impl<T: ValidObjCGeneric> ptr::FromOwned for ImmutableNSArray<T> {
-    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-        Self {
-            ptr,
-            _marker: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<T: ValidObjCGeneric> NSObjectProtocol for ImmutableNSArray<T> {
-    type Owned = Self;
-
-    fn class() -> ptr::objc::ClassPtr {
-        unsafe { choco_Foundation_NSArray_class() }
-    }
-}
-
-impl<T: ValidObjCGeneric> NSObjectInterface for ImmutableNSArray<T> {}
-impl<T: ValidObjCGeneric> NSArrayInterface<T> for ImmutableNSArray<T> {}
-
-impl<T: ValidObjCGeneric> NSCopyingProtocol for ImmutableNSArray<T> {
-    type Immutable = Self;
-}
-
-impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for ImmutableNSArray<T> {
-    type Mutable = NSMutableArray<T>;
-}
-
-impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for ImmutableNSArray<T> {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for ImmutableNSArray<T> {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for ImmutableNSArray<T> {}
-
-// An ImmutableNSArray is known to be immutable so can be shared between threads.
-unsafe impl<T: ValidObjCGeneric> Send for ImmutableNSArray<T> {}
-unsafe impl<T: ValidObjCGeneric> Sync for ImmutableNSArray<T> {}
-
-//-------------------------------------------------------------------
 // NSMutableArray interface
 
 extern "C" {
-    fn choco_Foundation_NSMutableArray_class() -> ptr::objc::ClassPtr;
+    fn choco_Foundation_NSMutableArray_class() -> ptr::ClassPtr;
     fn choco_Foundation_NSMutableArrayInterface_instance_addObject(
-        self_: ptr::objc::RawPtr,
-        object: ptr::objc::RawPtr,
+        self_: ptr::RawPtr,
+        object: ptr::RawPtr,
     );
 }
 
-pub trait NSMutableArrayInterface<T: ValidObjCGeneric>: NSArrayInterface<T> {
-    fn add_object<Value>(&self, value: &Value)
+pub trait NSMutableArrayInterface<T: ptr::Type>: NSArrayInterface<T> {
+    fn add_object<Object, Ptr>(&self, value: &Ptr)
     where
-        Value: IsKindOf<T>,
+        Object: IsKindOf<T>,
+        Ptr: ptr::PtrHolder<Object>,
     {
-        let raw_self = self.as_raw_ptr();
-        let raw_value = value.as_raw_ptr();
+        let raw_self = self.as_raw();
+        let raw_value = value.as_raw();
         unsafe { choco_Foundation_NSMutableArrayInterface_instance_addObject(raw_self, raw_value) }
     }
 }
@@ -235,50 +177,41 @@ pub trait NSMutableArrayInterface<T: ValidObjCGeneric>: NSArrayInterface<T> {
 //-------------------------------------------------------------------
 // NSMutableArray
 
-pub struct NSMutableArray<T: ValidObjCGeneric> {
-    ptr: ptr::objc::OwnedPtr,
+pub struct NSMutableArray<T: ptr::Type> {
     _marker: std::marker::PhantomData<T>,
 }
 
-impl<T: ValidObjCGeneric> ptr::AsRaw for NSMutableArray<T> {
-    fn as_raw_ptr(&self) -> ptr::objc::RawPtr {
-        self.ptr.as_raw_ptr()
-    }
+impl<T> ptr::Type for NSMutableArray<T>
+where
+    T: ptr::Type,
+{
+    const KIND: ptr::TypeKind = ptr::TypeKind::ObjC;
 }
 
-impl<T: ValidObjCGeneric> ptr::FromOwned for NSMutableArray<T> {
-    unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-        Self {
-            ptr,
-            _marker: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<T: ValidObjCGeneric> NSObjectProtocol for NSMutableArray<T> {
-    type Owned = Self;
-
-    fn class() -> ptr::objc::ClassPtr {
+impl<T> ObjCClass for NSMutableArray<T>
+where
+    T: ptr::Type,
+{
+    fn class() -> ptr::ClassPtr {
         unsafe { choco_Foundation_NSMutableArray_class() }
     }
 }
 
-impl<T: ValidObjCGeneric> NSObjectInterface for NSMutableArray<T> {}
-impl<T: ValidObjCGeneric> NSArrayInterface<T> for NSMutableArray<T> {}
-impl<T: ValidObjCGeneric> NSMutableArrayInterface<T> for NSMutableArray<T> {}
+impl<T> NSObjectInterfaceClassMethods for NSMutableArray<T> where T: ptr::Type {}
 
-impl<T: ValidObjCGeneric> NSCopyingProtocol for NSMutableArray<T> {
-    type Immutable = ImmutableNSArray<T>;
+impl<T> NSObjectProtocol for ptr::OwnedPtr<NSMutableArray<T>>
+where
+    T: ptr::Type,
+{
+    type Class = NSMutableArray<T>;
 }
+impl<T> NSObjectInterface for ptr::OwnedPtr<NSMutableArray<T>> where T: ptr::Type {}
+impl<T> NSArrayInterface<T> for ptr::OwnedPtr<NSMutableArray<T>> where T: ptr::Type {}
+impl<T> NSMutableArrayInterface<T> for ptr::OwnedPtr<NSMutableArray<T>> where T: ptr::Type {}
+impl<T> NSFastEnumerationProtocol<T> for ptr::OwnedPtr<NSMutableArray<T>> where T: ptr::Type {}
 
-impl<T: ValidObjCGeneric> NSMutableCopyingProtocol for NSMutableArray<T> {
-    type Mutable = NSMutableArray<T>;
-}
-
-impl<T: ValidObjCGeneric> NSFastEnumerationProtocol<T> for NSMutableArray<T> {}
-impl<T: ValidObjCGeneric> ValidObjCGeneric for NSMutableArray<T> {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<NSObject> for NSMutableArray<T> {}
-unsafe impl<T: ValidObjCGeneric> IsKindOf<NSArray<T>> for NSMutableArray<T> {}
+unsafe impl<T> IsKindOf<objc::NSObject> for NSMutableArray<T> where T: ptr::Type {}
+unsafe impl<T> IsKindOf<NSArray<T>> for NSMutableArray<T> where T: ptr::Type {}
 
 #[cfg(test)]
 mod mutable_array_tests {
@@ -286,7 +219,7 @@ mod mutable_array_tests {
 
     #[test]
     fn simple_array() {
-        let array: NSMutableArray<NSString> = NSMutableArray::new();
+        let array: ptr::OwnedPtr<NSMutableArray<NSString>> = NSMutableArray::new();
         assert!(array.is_empty());
         assert_eq!(array.count(), 0);
         let value = NSString::new_with_str("abcd");
