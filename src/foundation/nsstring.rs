@@ -1,30 +1,31 @@
-use crate::base::{objc, ptr};
-use objc::{NSObjectInterface, NSObjectInterfaceClassMethods, NSObjectProtocol, NSUInteger, BOOL};
-use ptr::ObjCClass;
-use objc::IsKindOf;
+use super::{NSObject, NSObjectInterface, NSObjectProtocol};
+use crate::base::{
+    AsRaw, IsKindOf, NSUInteger, ObjCClass, Ptr, PtrBehavior, RawClassPtr, RawObjPtr, Retained,
+    Type, TypeKind, BOOL,
+};
 
 //-------------------------------------------------------------------
-// NSString interface
+// NSString
 
 extern "C" {
-    fn choco_Foundation_NSString_class() -> ptr::ClassPtr;
+    fn choco_Foundation_NSString_class() -> RawClassPtr;
 
     fn choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(
-        class: ptr::ClassPtr,
+        class: RawClassPtr,
         bytes: *const std::ffi::c_void,
         len: usize,
         encoding: NSStringEncoding,
-    ) -> Option<ptr::RawPtr>;
+    ) -> Option<RawObjPtr>;
 
-    fn choco_Foundation_NSStringInterface_instance_UTF8String(self_: ptr::RawPtr) -> *const i8;
+    fn choco_Foundation_NSStringInterface_instance_UTF8String(self_: RawObjPtr) -> *const i8;
     fn choco_Foundation_NSStringInterface_instance_characterAtIndex(
-        self_: ptr::RawPtr,
+        self_: RawObjPtr,
         index: NSUInteger,
     ) -> u16;
-    fn choco_Foundation_NSStringInterface_instance_length(self_: ptr::RawPtr) -> NSUInteger;
+    fn choco_Foundation_NSStringInterface_instance_length(self_: RawObjPtr) -> NSUInteger;
     fn choco_Foundation_NSStringInterface_instance_isEqualToString(
-        self_: ptr::RawPtr,
-        other: ptr::RawPtr,
+        self_: RawObjPtr,
+        other: RawObjPtr,
     ) -> BOOL;
 }
 
@@ -61,6 +62,24 @@ pub trait NSStringInterface: NSObjectInterface
 // where
 //     Self: NSCopyingProtocol + NSMutableCopyingProtocol,
 {
+    fn new_with_str(text: &str) -> Ptr<Self, Retained> {
+        let bytes = text.as_ptr() as *const std::ffi::c_void;
+        let len = text.len();
+        let encoding = NSStringEncoding::UTF8;
+        unsafe {
+            let raw = choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(
+                Self::class(),
+                bytes,
+                len,
+                encoding,
+            )
+            .unwrap();
+            Ptr::from_raw_unchecked(raw)
+        }
+    }
+}
+
+pub trait NSStringInterfaceInstanceMethods: AsRaw {
     fn to_string(&self) -> Result<String, std::str::Utf8Error> {
         let raw_self = self.as_raw();
         let cstr = unsafe {
@@ -93,7 +112,11 @@ pub trait NSStringInterface: NSObjectInterface
         self.len() == 0
     }
 
-    fn is_equal_to_string(&self, obj: &impl NSStringInterface) -> bool {
+    fn is_equal_to_string<OtherT, OtherBehavior>(&self, obj: &Ptr<OtherT, OtherBehavior>) -> bool
+    where
+        OtherT: NSStringInterface,
+        OtherBehavior: PtrBehavior,
+    {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
         let ret = unsafe {
@@ -103,51 +126,30 @@ pub trait NSStringInterface: NSObjectInterface
     }
 }
 
-pub trait NSStringInterfaceClassMethods: NSObjectInterfaceClassMethods {
-    fn new_with_str(text: &str) -> ptr::OwnedPtr<Self> {
-        let bytes = text.as_ptr() as *const std::ffi::c_void;
-        let len = text.len();
-        let encoding = NSStringEncoding::UTF8;
-        unsafe {
-            let raw = choco_Foundation_NSStringInterface_class_newWithBytes_length_encoding(
-                Self::class(),
-                bytes,
-                len,
-                encoding,
-            )
-            .unwrap();
-            ptr::OwnedPtr::from_owned_raw_unchecked(raw)
-        }
-    }
+impl<T, Behavior> NSStringInterfaceInstanceMethods for Ptr<T, Behavior>
+where
+    T: NSStringInterface,
+    Behavior: PtrBehavior,
+{
 }
-
-//-------------------------------------------------------------------
-// NSString
 
 pub struct NSString {}
 
-impl NSString {}
-
-impl ptr::Type for NSString {
-    const KIND: ptr::TypeKind = ptr::TypeKind::ObjC;
+impl Type for NSString {
+    const KIND: TypeKind = TypeKind::ObjC;
 }
 
+unsafe impl IsKindOf<NSObject> for NSString {}
+
 impl ObjCClass for NSString {
-    fn class() -> ptr::ClassPtr {
+    fn class() -> RawClassPtr {
         unsafe { choco_Foundation_NSString_class() }
     }
 }
-impl NSObjectInterfaceClassMethods for NSString {}
-impl NSStringInterfaceClassMethods for NSString {}
 
-impl NSObjectProtocol for ptr::OwnedPtr<NSString> {
-    type Class = NSString;
-}
-impl NSObjectInterface for ptr::OwnedPtr<NSString> {}
-impl NSStringInterface for ptr::OwnedPtr<NSString> {}
-
-unsafe impl IsKindOf<objc::NSObject> for NSString {}
-
+impl NSObjectProtocol for NSString {}
+impl NSObjectInterface for NSString {}
+impl NSStringInterface for NSString {}
 
 // impl NSCopyingProtocol for NSString {
 //     type Immutable = ImmutableNSString;
@@ -160,6 +162,8 @@ unsafe impl IsKindOf<objc::NSObject> for NSString {}
 #[cfg(test)]
 mod string_tests {
     use super::*;
+    use crate::foundation::NSObject;
+    use crate::foundation::NSObjectProtocolInstanceMethods as _;
 
     #[test]
     fn empty_strings() {
@@ -178,7 +182,7 @@ mod string_tests {
     fn new_with_str() {
         let text = "😁";
         let obj = NSString::new_with_str(text);
-        assert!(obj.is_kind_of(objc::NSObject::class()));
+        assert!(obj.is_kind_of(NSObject::class()));
         assert!(obj.is_kind_of(NSString::class()));
         assert_eq!(obj.len(), 2); // NSString's "length" the number of UTF-18 code units.
         assert_eq!(&obj.to_string().unwrap(), text);
@@ -194,7 +198,7 @@ mod string_tests {
 // }
 
 // impl ptr::AsRaw for ImmutableNSString {
-//     fn as_raw_ptr(&self) -> ptr::RawPtr {
+//     fn as_raw_ptr(&self) -> RawObjPtr {
 //         self.ptr.as_raw_ptr()
 //     }
 // }
@@ -208,7 +212,7 @@ mod string_tests {
 // impl NSObjectProtocol for ImmutableNSString {
 //     type Owned = NSString;
 
-//     fn class() -> ptr::ClassPtr {
+//     fn class() -> RawClassPtr {
 //         unsafe { choco_Foundation_NSString_class() }
 //     }
 // }
@@ -235,106 +239,34 @@ mod string_tests {
 // unsafe impl Send for ImmutableNSString {}
 // unsafe impl Sync for ImmutableNSString {}
 
-// //-------------------------------------------------------------------
-// // StaticNSString
+//-------------------------------------------------------------------
+// NSMutableString
 
-// /// Unowned version of NSString used for static strings.
-// /// The main difference is that it's Copy and doesn't do any reference counting.
-// pub struct StaticNSString {
-//     ptr: ptr::StaticPtr,
-// }
+extern "C" {
+    fn choco_Foundation_NSMutableString_class() -> RawClassPtr;
+}
 
-// impl StaticNSString {
-//     /// # Safety
-//     /// The raw pointer passed in must be a pointer to a static NSString.
-//     pub(crate) unsafe fn from_static_unchecked(ptr: ptr::StaticPtr) -> Self {
-//         Self { ptr }
-//     }
-// }
+pub trait NSMutableStringInterface: NSStringInterface {}
 
-// impl ptr::AsRaw for StaticNSString {
-//     fn as_raw_ptr(&self) -> ptr::RawPtr {
-//         self.ptr.as_raw_ptr()
-//     }
-// }
+pub struct NSMutableString {}
 
-// // TODO: Should not be able to do StaticNSString::new()
-// impl NSObjectProtocol for StaticNSString {
-//     type Owned = NSString;
+impl Type for NSMutableString {
+    const KIND: TypeKind = TypeKind::ObjC;
+}
 
-//     fn class() -> ptr::ClassPtr {
-//         unsafe { choco_Foundation_NSString_class() }
-//     }
-// }
+unsafe impl IsKindOf<NSObject> for NSMutableString {}
+unsafe impl IsKindOf<NSString> for NSMutableString {}
 
-// impl NSObjectInterface for StaticNSString {}
-// impl NSStringInterface for StaticNSString {}
-// impl NSCopyingProtocol for StaticNSString {
-//     type Immutable = ImmutableNSString;
-// }
-// unsafe impl IsKindOf<NSObject> for StaticNSString {}
-// unsafe impl IsKindOf<NSString> for StaticNSString {}
+impl ObjCClass for NSMutableString {
+    fn class() -> RawClassPtr {
+        unsafe { choco_Foundation_NSString_class() }
+    }
+}
 
-// impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for StaticNSString {
-//     fn eq(&self, other: &Rhs) -> bool {
-//         self.is_equal_to_string(other)
-//     }
-// }
-
-// impl NSMutableCopyingProtocol for StaticNSString {
-//     type Mutable = NSMutableString;
-// }
-
-// // TODO: BorrowedNSString
-
-// //-------------------------------------------------------------------
-// // NSMutableString interface
-
-// extern "C" {
-//     fn choco_Foundation_NSMutableString_class() -> ptr::ClassPtr;
-// }
-
-// pub trait NSMutableStringInterface: NSObjectInterface {}
-
-// //-------------------------------------------------------------------
-// // NSMutableString
-
-// pub struct NSMutableString {
-//     ptr: ptr::OwnedPtr,
-// }
-
-// impl ptr::AsRaw for NSMutableString {
-//     fn as_raw_ptr(&self) -> ptr::RawPtr {
-//         self.ptr.as_raw_ptr()
-//     }
-// }
-
-// impl ptr::FromOwned for NSMutableString {
-//     unsafe fn from_owned_ptr_unchecked(ptr: ptr::OwnedPtr) -> Self {
-//         Self { ptr }
-//     }
-// }
-
-// impl NSObjectProtocol for NSMutableString {
-//     type Owned = Self;
-
-//     fn class() -> ptr::ClassPtr {
-//         unsafe { choco_Foundation_NSMutableString_class() }
-//     }
-// }
-
-// impl NSObjectInterface for NSMutableString {}
-// impl NSStringInterface for NSMutableString {}
-// impl NSMutableStringInterface for NSMutableString {}
-// impl ValidObjCGeneric for NSMutableString {}
-// unsafe impl IsKindOf<NSObject> for NSMutableString {}
-// unsafe impl IsKindOf<NSString> for NSMutableString {}
-
-// impl<Rhs: NSStringInterface> std::cmp::PartialEq<Rhs> for NSMutableString {
-//     fn eq(&self, other: &Rhs) -> bool {
-//         self.is_equal_to_string(other)
-//     }
-// }
+impl NSObjectProtocol for NSMutableString {}
+impl NSObjectInterface for NSMutableString {}
+impl NSStringInterface for NSMutableString {}
+impl NSMutableStringInterface for NSMutableString {}
 
 // impl NSCopyingProtocol for NSMutableString {
 //     type Immutable = ImmutableNSString;

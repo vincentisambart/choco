@@ -4,7 +4,7 @@ use objc::{IsKindOf, NSObjectInterface, NSObjectInterfaceClassMethods, NSObjectP
 use ptr::{AsRaw, ObjCClass};
 
 //-------------------------------------------------------------------
-// NSDictionary interface
+// NSDictionary
 
 extern "C" {
     fn choco_Foundation_NSDictionary_class() -> ptr::ClassPtr;
@@ -41,9 +41,6 @@ where
         }
     }
 }
-
-//-------------------------------------------------------------------
-// NSDictionary
 
 pub struct NSDictionary<K, V>
 where
