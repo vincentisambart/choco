@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-// pub(crate) mod block;
-// pub(crate) mod core_foundation;
+pub(crate) mod block;
+pub(crate) mod core_foundation;
 
 #[link(name = "objc", kind = "dylib")]
 extern "C" {
@@ -69,25 +69,26 @@ pub struct RawClassPtr {
     ptr: NonNull<OpaqueClass>,
 }
 
-// TODO: Try to find a better name?
-pub trait PtrBehavior: Sized {
+pub trait Ownership: Sized {
     // fn release<T: Type>(ptr: &mut Ptr<T, Self>);
     fn release<T: Type>(raw: RawObjPtr);
 }
 
-pub struct Ptr<T, Behavior = Retained>
+pub trait NonStatic: Ownership {}
+
+pub struct Ptr<T, O = Retained>
 where
     T: Type,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
     raw: RawObjPtr,
-    _marker: PhantomData<*const (T, Behavior)>,
+    _marker: PhantomData<*const (T, O)>,
 }
 
-impl<T, Behavior> Ptr<T, Behavior>
+impl<T, O> Ptr<T, O>
 where
     T: Type,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
     pub(crate) unsafe fn from_raw_unchecked(raw: RawObjPtr) -> Self {
         Self {
@@ -109,29 +110,29 @@ pub trait AsRaw {
     fn as_raw(&self) -> RawObjPtr;
 }
 
-impl<T, Behavior> AsRaw for Ptr<T, Behavior>
+impl<T, O> AsRaw for Ptr<T, O>
 where
     T: Type,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
     fn as_raw(&self) -> RawObjPtr {
         self.as_raw()
     }
 }
 
-impl<T, Behavior> Drop for Ptr<T, Behavior>
+impl<T, O> Drop for Ptr<T, O>
 where
     T: Type,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
     fn drop(&mut self) {
-        Behavior::release::<T>(self.raw)
+        O::release::<T>(self.raw)
     }
 }
 
 pub struct Retained {}
 
-impl PtrBehavior for Retained {
+impl Ownership for Retained {
     fn release<T: Type>(raw: RawObjPtr) {
         unsafe {
             match T::KIND {
@@ -142,9 +143,11 @@ impl PtrBehavior for Retained {
     }
 }
 
+impl NonStatic for Retained {}
+
 pub struct Static {}
 
-impl PtrBehavior for Static {
+impl Ownership for Static {
     fn release<T: Type>(_raw: RawObjPtr) {}
 }
 
@@ -210,8 +213,6 @@ const fn fourcc(text: &str) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn fourcc() {
         assert_eq!(super::fourcc("soun"), 0x736F756Eu32);

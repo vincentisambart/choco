@@ -2,7 +2,7 @@
 // (nothing suprising as they have been made to be used in concert)
 // FFI is simpler as we're just calling C functions.
 
-use crate::base::ptr;
+use super::{AsRaw, RawObjPtr};
 
 pub type CFIndex = isize;
 pub type CFHashCode = usize;
@@ -34,44 +34,42 @@ pub struct CFTypeID(usize);
 
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
-    fn CFRelease(cf: ptr::cf::RawRef);
-    fn CFRetain(cf: ptr::cf::RawRef) -> Option<ptr::cf::RawRef>;
-    fn CFShow(cf: ptr::cf::RawRef);
-    fn CFGetRetainCount(cf: ptr::cf::RawRef) -> CFIndex;
-    fn CFHash(cf: ptr::cf::RawRef) -> CFHashCode;
-    fn CFEqual(cf1: ptr::cf::RawRef, cf2: ptr::cf::RawRef) -> Boolean;
-    fn CFGetTypeID(cf: ptr::cf::RawRef) -> CFTypeID;
+    fn CFShow(cf: RawObjPtr);
+    fn CFGetRetainCount(cf: RawObjPtr) -> CFIndex;
+    fn CFHash(cf: RawObjPtr) -> CFHashCode;
+    fn CFEqual(cf1: RawObjPtr, cf2: RawObjPtr) -> Boolean;
+    fn CFGetTypeID(cf: RawObjPtr) -> CFTypeID;
 }
 
 pub trait CFTypeInterface
 where
-    Self: ptr::AsRaw,
+    Self: AsRaw,
     Self: Sized,
 {
     fn equal(&self, other: &impl CFTypeInterface) -> bool {
-        let self_raw = self.as_raw_ref();
-        let other_raw = other.as_raw_ref();
+        let self_raw = self.as_raw();
+        let other_raw = other.as_raw();
         let ret = unsafe { CFEqual(self_raw, other_raw) };
         ret.into()
     }
 
     fn show(&self) {
-        let self_raw = self.as_raw_ref();
+        let self_raw = self.as_raw();
         unsafe { CFShow(self_raw) };
     }
 
     fn retain_count(&self) -> isize {
-        let self_raw = self.as_raw_ref();
+        let self_raw = self.as_raw();
         unsafe { CFGetRetainCount(self_raw) }
     }
 
     fn hash(&self) -> usize {
-        let self_raw = self.as_raw_ref();
+        let self_raw = self.as_raw();
         unsafe { CFHash(self_raw) }
     }
 
     fn type_id(&self) -> CFTypeID {
-        let self_raw = self.as_raw_ref();
+        let self_raw = self.as_raw();
         unsafe { CFGetTypeID(self_raw) }
     }
 }

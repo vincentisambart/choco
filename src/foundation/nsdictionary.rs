@@ -1,25 +1,30 @@
 use super::*;
-use crate::base::{objc, ptr};
-use objc::{IsKindOf, NSObjectInterface, NSObjectInterfaceClassMethods, NSObjectProtocol};
-use ptr::{AsRaw, ObjCClass};
+use crate::base::{IsKindOf, Ptr, RawClassPtr, RawObjPtr, Retained, Type};
 
 //-------------------------------------------------------------------
 // NSDictionary
 
 extern "C" {
-    fn choco_Foundation_NSDictionary_class() -> ptr::ClassPtr;
-    fn choco_Foundation_NSDictionaryInterface_instance_count(self_: ptr::RawPtr) -> usize;
+    fn choco_Foundation_NSDictionary_class() -> RawClassPtr;
+    fn choco_Foundation_NSDictionaryInterface_instance_count(self_: RawObjPtr) -> usize;
     fn choco_Foundation_NSDictionaryInterface_instance_objectForKey(
-        self_: ptr::RawPtr,
-        key: ptr::RawPtr,
-    ) -> Option<ptr::RawPtr>;
+        self_: RawObjPtr,
+        key: RawObjPtr,
+    ) -> Option<RawObjPtr>;
 }
 
-pub trait NSDictionaryInterface<K, V>: NSObjectInterface
-where
-    K: ptr::Type, // + NSCopyingProtocol,
-    V: ptr::Type,
+pub trait NSDictionaryInterface: NSObjectInterface
+// Self: NSCopyingProtocol + NSMutableCopyingProtocol + NSFastEnumerationProtocol<T>,
+// Self: NSFastEnumerationProtocol<T>,
 {
+    type Key: Type; // + NSCopyingProtocol,
+    type Value: Type;
+}
+
+pub trait NSDictionaryInterfaceInstanceMethods: AsRaw {
+    type Key: Type; // + NSCopyingProtocol,
+    type Value: Type;
+
     fn count(&self) -> usize {
         let raw_self = self.as_raw();
         unsafe { choco_Foundation_NSDictionaryInterface_instance_count(raw_self) }
@@ -28,68 +33,88 @@ where
         self.count() == 0
     }
 
-    fn get<Ptr, Key>(&self, key: &Ptr) -> Option<ptr::OwnedPtr<V>>
+    fn get<PassedKey, PassedKeyOwnership>(
+        &self,
+        key: &Ptr<PassedKey, PassedKeyOwnership>,
+    ) -> Option<Ptr<Self::Value, Retained>>
     where
-        Key: IsKindOf<K>,
-        Ptr: ptr::PtrHolder<Key>,
+        PassedKey: IsKindOf<Self::Key>,
+        PassedKeyOwnership: Ownership,
     {
         let raw_self = self.as_raw();
         let raw_key = key.as_raw();
         unsafe {
             choco_Foundation_NSDictionaryInterface_instance_objectForKey(raw_self, raw_key)
-                .map(|raw| ptr::OwnedPtr::from_owned_raw_unchecked(raw))
+                .map(|raw| Ptr::from_raw_unchecked(raw))
         }
     }
 }
 
+impl<T, O> NSDictionaryInterfaceInstanceMethods for Ptr<T, O>
+where
+    T: NSDictionaryInterface,
+    O: Ownership,
+{
+    type Key = T::Key;
+    type Value = T::Value;
+}
+
 pub struct NSDictionary<K, V>
 where
-    K: ptr::Type, // + NSCopyingProtocol,
-    V: ptr::Type,
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
 {
     _marker_k: std::marker::PhantomData<K>,
     _marker_v: std::marker::PhantomData<V>,
 }
 
-// impl<K, V> ptr::FromOwned for NSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-//         Self {
-//             ptr,
-//             _marker_k: std::marker::PhantomData,
-//             _marker_v: std::marker::PhantomData,
-//         }
-//     }
-// }
+impl<K, V> Type for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    const KIND: TypeKind = TypeKind::ObjC;
+}
 
-// impl<K, V> NSObjectProtocol for NSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     type Owned = Self;
+impl<K, V> ObjCClass for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    fn class() -> RawClassPtr {
+        unsafe { choco_Foundation_NSDictionary_class() }
+    }
+}
 
-//     fn class() -> ptr::ClassPtr {
-//         unsafe { choco_Foundation_NSDictionary_class() }
-//     }
-// }
+unsafe impl<K, V> IsKindOf<NSObject> for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-// impl<K, V> NSObjectInterface for NSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
+impl<K, V> NSObjectProtocol for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-// impl<K, V> NSDictionaryInterface<K, V> for NSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
+impl<K, V> NSObjectInterface for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
+
+impl<K, V> NSDictionaryInterface for NSDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    type Key = K;
+    type Value = V;
+}
 
 // impl<K, V> NSCopyingProtocol for NSDictionary<K, V>
 // where
@@ -121,206 +146,147 @@ where
 // {
 // }
 
-// //-------------------------------------------------------------------
-// // ImmutableNSDictionary
+//-------------------------------------------------------------------
+// NSMutableDictionary
 
-// pub struct ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     ptr: ptr::objc::OwnedPtr,
-//     _marker_k: std::marker::PhantomData<K>,
-//     _marker_v: std::marker::PhantomData<V>,
-// }
+extern "C" {
+    fn choco_Foundation_NSMutableDictionary_class() -> RawClassPtr;
+    fn choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
+        self_: RawObjPtr,
+        object: RawObjPtr,
+        key: RawObjPtr,
+    );
+    fn choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
+        self_: RawObjPtr,
+        key: RawObjPtr,
+    );
+    fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(self_: RawObjPtr);
+}
 
-// impl<K, V> ptr::FromOwned for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-//         Self {
-//             ptr,
-//             _marker_k: std::marker::PhantomData,
-//             _marker_v: std::marker::PhantomData,
-//         }
-//     }
-// }
+pub trait NSMutableDictionaryInterface: NSDictionaryInterface {}
 
-// impl<K, V> NSObjectProtocol for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     type Owned = Self;
+pub trait NSMutableDictionaryInterfaceInstanceMethods:
+    NSDictionaryInterfaceInstanceMethods
+{
+    fn set<PassedKey, PassedValue, PassedKeyOwnership, PassedValueOwnership>(
+        &self,
+        key: &Ptr<PassedKey, PassedKeyOwnership>,
+        value: &Ptr<PassedValue, PassedValueOwnership>,
+    ) where
+        PassedKey: IsKindOf<Self::Key>,
+        PassedValue: IsKindOf<Self::Value>,
+        PassedKeyOwnership: Ownership,
+        PassedValueOwnership: Ownership,
+    {
+        let raw_self = self.as_raw();
+        let raw_key = key.as_raw();
+        let raw_value = value.as_raw();
+        unsafe {
+            choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
+                raw_self, raw_value, raw_key,
+            )
+        }
+    }
 
-//     fn class() -> ptr::ClassPtr {
-//         unsafe { choco_Foundation_NSDictionary_class() }
-//     }
-// }
+    fn remove<PassedKey, PassedKeyOwnership>(&self, key: &Ptr<PassedKey, PassedKeyOwnership>)
+    where
+        PassedKey: IsKindOf<Self::Key>,
+        PassedKeyOwnership: Ownership,
+    {
+        let raw_self = self.as_raw();
+        let raw_key = key.as_raw();
+        unsafe {
+            choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
+                raw_self, raw_key,
+            )
+        }
+    }
 
-// impl<K, V> NSObjectInterface for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
-// impl<K, V> NSDictionaryInterface<K, V> for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
-// impl<K, V> NSFastEnumerationProtocol<K> for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
+    fn remove_all(&self) {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(raw_self) }
+    }
+}
 
-// impl<K, V> NSCopyingProtocol for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     type Immutable = Self;
-// }
+pub struct NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    _marker_k: std::marker::PhantomData<K>,
+    _marker_v: std::marker::PhantomData<V>,
+}
 
-// impl<K, V> NSMutableCopyingProtocol for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     type Mutable = NSMutableDictionary<K, V>;
-// }
+impl<K, V> Type for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    const KIND: TypeKind = TypeKind::ObjC;
+}
 
-// // An ImmutableNSString is known to be immutable so can be shared between threads.
-// unsafe impl<K, V> Send for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
-// unsafe impl<K, V> Sync for ImmutableNSDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
+impl<K, V> ObjCClass for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    fn class() -> RawClassPtr {
+        unsafe { choco_Foundation_NSMutableDictionary_class() }
+    }
+}
 
-// //-------------------------------------------------------------------
-// // NSMutableDictionary
+unsafe impl<K, V> IsKindOf<NSObject> for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-// extern "C" {
-//     fn choco_Foundation_NSMutableDictionary_class() -> ptr::ClassPtr;
-//     fn choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
-//         self_: ptr::RawPtr,
-//         object: ptr::RawPtr,
-//         key: ptr::RawPtr,
-//     );
-//     fn choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
-//         self_: ptr::RawPtr,
-//         key: ptr::RawPtr,
-//     );
-//     fn choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(self_: ptr::RawPtr);
-// }
+// TODO: Should allow passing a dictionary with NSString values to something
+// accepting NSObject value.
+unsafe impl<K, V> IsKindOf<NSDictionary<K, V>> for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-// pub trait NSMutableDictionaryInterface<K, V>: NSDictionaryInterface<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     fn set<Key, Value>(&self, key: &Key, value: &Value)
-//     where
-//         Key: IsKindOf<K>,
-//         Value: IsKindOf<V>,
-//     {
-//         let raw_self = self.as_raw();
-//         let raw_key = key.as_raw();
-//         let raw_value = value.as_raw();
-//         unsafe {
-//             choco_Foundation_NSMutableDictionaryInterface_instance_setObject_forKey(
-//                 raw_self, raw_value, raw_key,
-//             )
-//         }
-//     }
+impl<K, V> NSObjectProtocol for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-//     fn remove<Key>(&self, key: &Key)
-//     where
-//         Key: IsKindOf<K>,
-//     {
-//         let raw_self = self.as_raw();
-//         let raw_key = key.as_raw();
-//         unsafe {
-//             choco_Foundation_NSMutableDictionaryInterface_instance_removeObjectForKey(
-//                 raw_self, raw_key,
-//             )
-//         }
-//     }
+impl<K, V> NSObjectInterface for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-//     fn remove_all(&self) {
-//         let raw_self = self.as_raw();
-//         unsafe { choco_Foundation_NSMutableDictionaryInterface_instance_removeAllObjects(raw_self) }
-//     }
-// }
+impl<K, V> NSDictionaryInterface for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+    type Key = K;
+    type Value = V;
+}
 
-// pub struct NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     ptr: ptr::objc::OwnedPtr,
-//     _marker_k: std::marker::PhantomData<K>,
-//     _marker_v: std::marker::PhantomData<V>,
-// }
+impl<K, V> NSMutableDictionaryInterface for NSMutableDictionary<K, V>
+where
+    K: Type, // + NSCopyingProtocol,
+    V: Type,
+{
+}
 
-// impl<K, V> ptr::FromOwned for NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     unsafe fn from_owned_ptr_unchecked(ptr: ptr::objc::OwnedPtr) -> Self {
-//         Self {
-//             ptr,
-//             _marker_k: std::marker::PhantomData,
-//             _marker_v: std::marker::PhantomData,
-//         }
-//     }
-// }
-
-// impl<K, V> NSObjectProtocol for NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-//     type Owned = Self;
-
-//     fn class() -> ptr::ClassPtr {
-//         unsafe { choco_Foundation_NSMutableDictionary_class() }
-//     }
-// }
-
-// impl<K, V> NSObjectInterface for NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
-
-// impl<K, V> NSDictionaryInterface<K, V> for NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
-
-// impl<K, V> NSMutableDictionaryInterface<K, V> for NSMutableDictionary<K, V>
-// where
-//     K: ValidObjCGeneric + NSCopyingProtocol,
-//     V: ValidObjCGeneric,
-// {
-// }
+impl<T, O> NSMutableDictionaryInterfaceInstanceMethods for Ptr<T, O>
+where
+    T: NSDictionaryInterface,
+    O: Ownership,
+{
+}
 
 // impl<K, V> NSCopyingProtocol for NSMutableDictionary<K, V>
 // where
@@ -352,20 +318,20 @@ where
 // {
 // }
 
-// #[cfg(test)]
-// mod mutable_dictionary_tests {
-//     use super::*;
+#[cfg(test)]
+mod mutable_dictionary_tests {
+    use super::*;
 
-//     #[test]
-//     fn simple_dictionary() {
-//         let dic: NSMutableDictionary<NSString, NSDate> = NSMutableDictionary::new();
-//         assert!(dic.is_empty());
-//         assert_eq!(dic.count(), 0);
-//         let date = NSDate::new();
-//         let key = NSString::new_with_str("abcd");
-//         dic.set(&key, &date);
-//         assert_eq!(dic.count(), 1);
-//         let got = dic.get(&key).unwrap();
-//         assert!(got.is_equal(&date));
-//     }
-// }
+    #[test]
+    fn simple_dictionary() {
+        let dic = NSMutableDictionary::<NSString, NSDate>::new();
+        assert!(dic.is_empty());
+        assert_eq!(dic.count(), 0);
+        let date = NSDate::new();
+        let key = NSString::new_with_str("abcd");
+        dic.set(&key, &date);
+        assert_eq!(dic.count(), 1);
+        let got = dic.get(&key).unwrap();
+        assert!(got.is_equal(&date));
+    }
+}

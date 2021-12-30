@@ -1,4 +1,4 @@
-use crate::base::ptr;
+use super::OpaqueClass;
 
 /// Main documentation sources about C blocks and how they behave:
 /// - <https://clang.llvm.org/docs/Block-ABI-Apple.html>
@@ -15,7 +15,7 @@ use std::os::raw::{c_int, c_ulong};
 
 #[link(name = "System", kind = "dylib")]
 extern "C" {
-    static _NSConcreteStackBlock: ptr::objc::OpaqueClass;
+    static _NSConcreteStackBlock: OpaqueClass;
 
     fn _Block_copy(block: *const c_void) -> *mut c_void;
     fn _Block_release(block: *const c_void);
@@ -49,7 +49,7 @@ unsafe impl Sync for BlockDescriptor {}
 
 #[repr(C)]
 pub struct BlockHeader {
-    isa: *const ptr::objc::OpaqueClass,
+    isa: *const OpaqueClass,
     flags: c_int,
     _reserved: c_int,
     // Function pointer taking a pointer to the block as a first parameter,

@@ -1,6 +1,6 @@
 use super::{NSObject, NSObjectInterface, NSObjectProtocol};
 use crate::base::{
-    AsRaw, IsKindOf, ObjCClass, Ptr, PtrBehavior, RawClassPtr, RawObjPtr, Retained, Type, TypeKind,
+    AsRaw, IsKindOf, ObjCClass, Ptr, Ownership, RawClassPtr, RawObjPtr, Retained, Type, TypeKind,
 };
 
 //-------------------------------------------------------------------
@@ -69,13 +69,13 @@ trait NSArrayInterfaceInstanceMethods: AsRaw {
 
     // TODO: Check if arrayByAddingObject on a NSMutableArray returns a NSArray or NSMutableArray
     #[must_use]
-    fn adding_object<OtherT, OtherBehavior>(
+    fn adding_object<OtherT, OtherOwnership>(
         &self,
-        object: &Ptr<OtherT, OtherBehavior>,
+        object: &Ptr<OtherT, OtherOwnership>,
     ) -> Ptr<NSArray<Self::Item>, Retained>
     where
         OtherT: IsKindOf<Self::Item>,
-        OtherBehavior: PtrBehavior,
+        OtherOwnership: Ownership,
     {
         let raw_self = self.as_raw();
         let raw_obj = object.as_raw();
@@ -88,10 +88,10 @@ trait NSArrayInterfaceInstanceMethods: AsRaw {
     }
 }
 
-impl<T, Behavior> NSArrayInterfaceInstanceMethods for Ptr<T, Behavior>
+impl<T, O> NSArrayInterfaceInstanceMethods for Ptr<T, O>
 where
     T: NSArrayInterface,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
     type Item = T::Item;
 }
@@ -172,10 +172,10 @@ extern "C" {
 pub trait NSMutableArrayInterface: NSArrayInterface {}
 
 trait NSMutableArrayInterfaceInstanceMethods: NSArrayInterfaceInstanceMethods {
-    fn add_object<ObjT, ObjBehavior>(&self, obj: &Ptr<ObjT, ObjBehavior>)
+    fn add_object<ObjT, ObjOwnership>(&self, obj: &Ptr<ObjT, ObjOwnership>)
     where
         ObjT: IsKindOf<Self::Item>,
-        ObjBehavior: PtrBehavior,
+        ObjOwnership: Ownership,
     {
         let raw_self = self.as_raw();
         let raw_obj = obj.as_raw();
@@ -183,10 +183,10 @@ trait NSMutableArrayInterfaceInstanceMethods: NSArrayInterfaceInstanceMethods {
     }
 }
 
-impl<T, Behavior> NSMutableArrayInterfaceInstanceMethods for Ptr<T, Behavior>
+impl<T, O> NSMutableArrayInterfaceInstanceMethods for Ptr<T, O>
 where
     T: NSMutableArrayInterface,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
 }
 

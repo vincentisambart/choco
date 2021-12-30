@@ -1,7 +1,7 @@
 use super::{NSObject, NSObjectInterface, NSObjectProtocol};
 use crate::base::{
-    AsRaw, IsKindOf, NSUInteger, ObjCClass, Ptr, PtrBehavior, RawClassPtr, RawObjPtr, Retained,
-    Type, TypeKind, BOOL,
+    AsRaw, IsKindOf, NSUInteger, ObjCClass, Ownership, Ptr, RawClassPtr, RawObjPtr, Retained, Type,
+    TypeKind, BOOL,
 };
 
 //-------------------------------------------------------------------
@@ -112,10 +112,10 @@ pub trait NSStringInterfaceInstanceMethods: AsRaw {
         self.len() == 0
     }
 
-    fn is_equal_to_string<OtherT, OtherBehavior>(&self, obj: &Ptr<OtherT, OtherBehavior>) -> bool
+    fn is_equal_to_string<OtherT, OtherOwnership>(&self, obj: &Ptr<OtherT, OtherOwnership>) -> bool
     where
         OtherT: NSStringInterface,
-        OtherBehavior: PtrBehavior,
+        OtherOwnership: Ownership,
     {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
@@ -126,10 +126,10 @@ pub trait NSStringInterfaceInstanceMethods: AsRaw {
     }
 }
 
-impl<T, Behavior> NSStringInterfaceInstanceMethods for Ptr<T, Behavior>
+impl<T, O> NSStringInterfaceInstanceMethods for Ptr<T, O>
 where
     T: NSStringInterface,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
 }
 

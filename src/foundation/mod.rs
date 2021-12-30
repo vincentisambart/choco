@@ -1,10 +1,10 @@
 use crate::base::{
-    AsRaw, NSUInteger, ObjCClass, Ptr, PtrBehavior, RawClassPtr, RawObjPtr, Retained, Type,
-    TypeKind, BOOL,
+    AsRaw, IsKindOf, NSUInteger, NonStatic, ObjCClass, Ownership, Ptr, RawClassPtr, RawObjPtr,
+    Retained, Type, TypeKind, BOOL,
 };
 
 mod nsarray;
-// mod nsdictionary;
+mod nsdictionary;
 mod nsstring;
 pub use nsarray::*;
 // pub use nsdictionary::*;
@@ -48,9 +48,9 @@ trait NSObjectProtocolInstanceMethods: AsRaw {
 
     // In Objective-C, the parameter to -[NSObject isEqual:] is nullable,
     // we consider it non-nullable to makes things simpler.
-    fn is_equal<OtherT: NSObjectProtocol, OtherBehavior: PtrBehavior>(
+    fn is_equal<OtherT: NSObjectProtocol, OtherOwnership: Ownership>(
         &self,
-        obj: &Ptr<OtherT, OtherBehavior>,
+        obj: &Ptr<OtherT, OtherOwnership>,
     ) -> bool {
         let self_raw = self.as_raw();
         let obj_raw = obj.as_raw();
@@ -83,10 +83,10 @@ trait NSObjectProtocolInstanceMethods: AsRaw {
     // }
 }
 
-impl<T, Behavior> NSObjectProtocolInstanceMethods for Ptr<T, Behavior>
+impl<T, O> NSObjectProtocolInstanceMethods for Ptr<T, O>
 where
     T: NSObjectProtocol,
-    Behavior: PtrBehavior,
+    O: Ownership,
 {
 }
 
@@ -113,15 +113,15 @@ impl ObjCClass for NSObject {
 impl NSObjectProtocol for NSObject {}
 impl NSObjectInterface for NSObject {}
 
-impl<LhsT, LhsBehavior, RhsT, RhsBehavior> std::cmp::PartialEq<Ptr<RhsT, RhsBehavior>>
-    for Ptr<LhsT, LhsBehavior>
+impl<LhsT, LhsOwnership, RhsT, RhsOwnership> std::cmp::PartialEq<Ptr<RhsT, RhsOwnership>>
+    for Ptr<LhsT, LhsOwnership>
 where
     LhsT: NSObjectInterface,
     RhsT: NSObjectInterface,
-    LhsBehavior: PtrBehavior,
-    RhsBehavior: PtrBehavior,
+    LhsOwnership: Ownership,
+    RhsOwnership: Ownership,
 {
-    fn eq(&self, other: &Ptr<RhsT, RhsBehavior>) -> bool {
+    fn eq(&self, other: &Ptr<RhsT, RhsOwnership>) -> bool {
         self.is_equal(other)
     }
 }
@@ -152,16 +152,15 @@ mod tests {
     }
 }
 
-// //-------------------------------------------------------------------
-// // NSCopying/NSMutableCopying
+//-------------------------------------------------------------------
+// NSCopying/NSMutableCopying
 
-// extern "C" {
-//     // Technically, copy and mutableCopy are methods of NSObject, but they will just throw an exception for types that are not NSCopying/NSMutableCopying.
-//     fn choco_Foundation_NSCopyingProtocol_copy(self_: RawObjPtr) -> Option<RawObjPtr>;
-//     fn choco_Foundation_NSMutableCopyingProtocol_mutableCopy(
-//         self_: RawObjPtr,
-//     ) -> Option<RawObjPtr>;
-// }
+extern "C" {
+    // Technically, copy and mutableCopy are methods of NSObject, but they will just throw an exception for types that are not NSCopying/NSMutableCopying.
+    fn choco_Foundation_NSCopyingProtocol_copy(self_: RawObjPtr) -> Option<RawObjPtr>;
+    fn choco_Foundation_NSMutableCopyingProtocol_mutableCopy(self_: RawObjPtr)
+        -> Option<RawObjPtr>;
+}
 
 // // pub trait NSCopyingProtocol: objc::NSObjectInterface {
 // //     type Immutable: FromOwned;
@@ -431,12 +430,6 @@ where
 // //     ptr: objc::OwnedPtr,
 // // }
 
-// // impl AsRaw for NSURL {
-// //     fn as_raw_ptr(&self) -> RawObjPtr {
-// //         self.ptr.as_raw_ptr()
-// //     }
-// // }
-
 // // impl FromOwned for NSURL {
 // //     unsafe fn from_owned_ptr_unchecked(ptr: objc::OwnedPtr) -> Self {
 // //         Self { ptr }
@@ -484,106 +477,93 @@ where
 // //     }
 // // }
 
-// // //-------------------------------------------------------------------
-// // // NSDate
+// //-------------------------------------------------------------------
+// // NSDate
 
-// // #[derive(Copy, Clone, PartialEq, PartialOrd)]
-// // #[repr(transparent)]
-// // pub struct NSTimeInterval {
-// //     secs: f64,
-// // }
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[repr(transparent)]
+pub struct NSTimeInterval {
+    secs: f64,
+}
 
-// // impl NSTimeInterval {
-// //     pub fn from_secs(secs: f64) -> Self {
-// //         Self { secs }
-// //     }
+impl NSTimeInterval {
+    pub fn from_secs(secs: f64) -> Self {
+        Self { secs }
+    }
 
-// //     pub fn secs(self) -> f64 {
-// //         self.secs
-// //     }
-// // }
+    pub fn secs(self) -> f64 {
+        self.secs
+    }
+}
 
-// // extern "C" {
-// //     fn choco_Foundation_NSDate_class() -> objc::ClassPtr;
-// //     fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(
-// //         self_: RawObjPtr,
-// //     ) -> NSTimeInterval;
-// //     fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(
-// //         self_: RawObjPtr,
-// //     ) -> NSTimeInterval;
-// //     fn choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(
-// //         self_: RawObjPtr,
-// //     ) -> NSTimeInterval;
-// //     fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(
-// //         self_: RawObjPtr,
-// //         anotherDate: RawObjPtr,
-// //     ) -> NSTimeInterval;
-// // }
+extern "C" {
+    fn choco_Foundation_NSDate_class() -> RawClassPtr;
+    fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(
+        self_: RawObjPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(
+        self_: RawObjPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(
+        self_: RawObjPtr,
+    ) -> NSTimeInterval;
+    fn choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(
+        self_: RawObjPtr,
+        anotherDate: RawObjPtr,
+    ) -> NSTimeInterval;
+}
 
-// // pub trait NSDateInterface: NSObjectInterface
-// // where
-// //     Self: NSCopyingProtocol,
-// // {
-// //     fn since_now(&self) -> NSTimeInterval {
-// //         let raw_self = self.as_raw_ptr();
-// //         unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(raw_self) }
-// //     }
+pub trait NSDateInterfaceInstanceMethods: AsRaw // where
+//     Self: NSCopyingProtocol,
+{
+    fn since_now(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSinceNow(raw_self) }
+    }
 
-// //     fn since_reference_date(&self) -> NSTimeInterval {
-// //         let raw_self = self.as_raw_ptr();
-// //         unsafe {
-// //             choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(raw_self)
-// //         }
-// //     }
+    fn since_reference_date(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe {
+            choco_Foundation_NSDateInterface_instance_timeIntervalSinceReferenceDate(raw_self)
+        }
+    }
 
-// //     fn since_1970(&self) -> NSTimeInterval {
-// //         let raw_self = self.as_raw_ptr();
-// //         unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(raw_self) }
-// //     }
+    fn since_1970(&self) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        unsafe { choco_Foundation_NSDateInterface_instance_timeIntervalSince1970(raw_self) }
+    }
 
-// //     fn since(&self, another_date: &NSDate) -> NSTimeInterval {
-// //         let raw_self = self.as_raw_ptr();
-// //         let raw_another_date = another_date.as_raw_ptr();
-// //         unsafe {
-// //             choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(
-// //                 raw_self,
-// //                 raw_another_date,
-// //             )
-// //         }
-// //     }
-// // }
+    fn since<O: Ownership>(&self, another_date: &Ptr<NSDate, O>) -> NSTimeInterval {
+        let raw_self = self.as_raw();
+        let raw_another_date = another_date.as_raw();
+        unsafe {
+            choco_Foundation_NSDateInterface_instance_timeIntervalSinceDate(
+                raw_self,
+                raw_another_date,
+            )
+        }
+    }
+}
 
-// // pub struct NSDate {
-// //     ptr: objc::OwnedPtr,
-// // }
+pub struct NSDate {}
 
-// // impl AsRaw for NSDate {
-// //     fn as_raw_ptr(&self) -> RawObjPtr {
-// //         self.ptr.as_raw_ptr()
-// //     }
-// // }
+impl Type for NSDate {
+    const KIND: TypeKind = TypeKind::ObjC;
+}
 
-// // impl FromOwned for NSDate {
-// //     unsafe fn from_owned_ptr_unchecked(ptr: objc::OwnedPtr) -> Self {
-// //         Self { ptr }
-// //     }
-// // }
-
-// // impl NSObjectProtocol for NSDate {
-// //     type Owned = Self;
-
-// //     fn class() -> objc::ClassPtr {
-// //         unsafe { choco_Foundation_NSDate_class() }
-// //     }
-// // }
-
-// // impl NSObjectInterface for NSDate {}
-// // impl NSDateInterface for NSDate {}
+impl ObjCClass for NSDate {
+    fn class() -> RawClassPtr {
+        unsafe { choco_Foundation_NSDate_class() }
+    }
+}
+impl NSObjectProtocol for NSDate {}
+impl NSObjectInterface for NSDate {}
+// impl NSDateInterface for NSDate {}
 // // impl NSCopyingProtocol for NSDate {
 // //     type Immutable = Self;
 // // }
 // // impl ValidObjCGeneric for NSDate {}
-// // unsafe impl IsKindOf<NSObject> for NSDate {}
+unsafe impl IsKindOf<NSObject> for NSDate {}
 
 // // impl std::ops::Sub for &NSDate {
 // //     type Output = NSTimeInterval;
@@ -593,9 +573,9 @@ where
 // //     }
 // // }
 
-// // // A NSDate is immutable so can be shared between threads.
-// // unsafe impl Send for NSDate {}
-// // unsafe impl Sync for NSDate {}
+// A NSDate is immutable so can be shared between threads.
+unsafe impl<O: NonStatic> Send for Ptr<NSDate, O> {}
+unsafe impl<O: NonStatic> Sync for Ptr<NSDate, O> {}
 
 // // //-------------------------------------------------------------------
 // // // NSValue
@@ -687,12 +667,6 @@ where
 
 // // pub struct NSNumber {
 // //     ptr: objc::OwnedPtr,
-// // }
-
-// // impl AsRaw for NSNumber {
-// //     fn as_raw_ptr(&self) -> RawObjPtr {
-// //         self.ptr.as_raw_ptr()
-// //     }
 // // }
 
 // // impl FromOwned for NSNumber {
@@ -802,12 +776,6 @@ where
 
 // // pub struct NSError {
 // //     ptr: objc::OwnedPtr,
-// // }
-
-// // impl AsRaw for NSError {
-// //     fn as_raw_ptr(&self) -> RawObjPtr {
-// //         self.ptr.as_raw_ptr()
-// //     }
 // // }
 
 // // impl FromOwned for NSError {
